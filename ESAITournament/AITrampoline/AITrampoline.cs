@@ -3,10 +3,17 @@ using System.Diagnostics;
 
 namespace AITrampoline
 {
-	public class NotAIEmpire : AI_Empire {
-		public NotAIEmpire(Empire e) : base(e) {
+	public class NotAIMaster : AI_Master {
+		public NotAIMaster(Empire e) : base(e) {
+			this.layers = new System.Collections.Generic.List<AILayer> (); //clear any layers that are present
 		}
 
+	}
+
+	public class NotAIEmpire: AI_Empire {
+		public NotAIEmpire(Empire e) : base(e) {
+			this.layers = new System.Collections.Generic.List<AILayer> (); //clear any layers that are present
+		}
 	}
 	public class AITrampoline : AIPlayerController
 	{
@@ -22,6 +29,13 @@ namespace AITrampoline
 		{
 			Trace.WriteLine ("Bind injection on empire " + empire.Player.EmpireIndex);
 			base.Bind (empire);
+
+			if (empire.EmpirePlayerType != Empire.PlayerType.Pirates) {
+				base.ai = new NotAIMaster (empire);
+				empire.AI = base.ai;
+				empire.EmpireAI = this.CreateAIEmpire (empire);
+			}
+
 		}
 		public override AI_Empire CreateAIEmpire (Empire empire)
 		{
