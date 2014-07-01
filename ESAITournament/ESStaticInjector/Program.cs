@@ -7,12 +7,7 @@ namespace ESStaticInjector
 {
 	class MainClass
 	{
-		Object trampoline(Object e) {
-			return AITrampoline.AITrampoline.NotConstructor (e);
-		}
-		Object nopMe(Object e) {
-			return null;
-		}
+	
 		public static void Main (string[] args)
 		{
 			var resolver = new DefaultAssemblyResolver();
@@ -33,6 +28,13 @@ namespace ESStaticInjector
 			foreach (TypeDefinition type in myLibrary.MainModule.Types) {
 				//Writes the full name of a type
 				//Console.WriteLine (type.FullName);
+				if (type.FullName == "AIPlayerController") {
+					foreach (MethodDefinition method in type.Methods) {
+						if (method.Name == "Bind") {
+							method.IsPublic = true;
+						}
+					}
+				}
 				if (type.FullName == "ApplicationState_Lobby") {
 					foreach (MethodDefinition method in type.Methods) {
 						//Console.WriteLine (method.Name);
@@ -53,14 +55,6 @@ namespace ESStaticInjector
 								}
 
 							}
-							/*method.Body.Instructions.Clear ();
-							//monodis trampoline
-							processor.Append (processor.Create (OpCodes.Nop));
-							processor.Append (processor.Create (OpCodes.Ldarg_1));
-							processor.Append (processor.Create (OpCodes.Call, notConstructor_impl));
-							processor.Append (processor.Create (OpCodes.Ret));
-
-							//processor.Append (processor.Create (OpCodes.Ret));*/
 							Console.WriteLine ("Inject success!");
 						}
 					}
