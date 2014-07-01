@@ -7,18 +7,23 @@ namespace ESStaticInjector
 {
 	class MainClass
 	{
-	
+		static string homePath() {
+			return (Environment.OSVersion.Platform == PlatformID.Unix ||
+			Environment.OSVersion.Platform == PlatformID.MacOSX)
+				? Environment.GetEnvironmentVariable ("HOME")
+					: Environment.ExpandEnvironmentVariables ("%HOMEDRIVE%%HOMEPATH%");
+		}
 		public static void Main (string[] args)
 		{
 			var resolver = new DefaultAssemblyResolver();
-			var path = @"/Users/drew/Library/Application Support/Steam/SteamApps/common/Endless Space/Endless Space.app/Contents/Data/Managed/";
+			var path = homePath() + @"/Library/Application Support/Steam/SteamApps/common/Endless Space/Endless Space.app/Contents/Data/Managed/";
 			resolver.AddSearchDirectory(path);
 
 			var parameters = new ReaderParameters
 			{
 				AssemblyResolver = resolver,
 			};
-			AssemblyDefinition myLibrary =AssemblyDefinition.ReadAssembly(@"/Users/drew/Downloads/"+"Assembly-CSharp.dll",parameters);
+			AssemblyDefinition myLibrary =AssemblyDefinition.ReadAssembly(Environment.CurrentDirectory+"/../../Assembly-CSharp.dll",parameters);
 
 
 			var trampolineType = typeof(AITrampoline.AITrampoline);
