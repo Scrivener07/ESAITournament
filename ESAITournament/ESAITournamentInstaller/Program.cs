@@ -29,7 +29,7 @@ namespace ESAITournamentInstaller
 			{
 				string name = Path.GetFileName( file );
 				string dest = Path.Combine( destFolder, name );
-				File.Copy( file, dest );
+				File.Copy( file, dest, true);
 			}
 			string[] folders = Directory.GetDirectories( sourceFolder );
 			foreach (string folder in folders)
@@ -38,6 +38,10 @@ namespace ESAITournamentInstaller
 				string dest = Path.Combine( destFolder, name );
 				CopyFolder( folder, dest );
 			}
+		}
+
+		static string PayloadPath() {
+			return Environment.CurrentDirectory + "/../../Payload";
 		}
 
 		public static void Main (string[] args)
@@ -53,7 +57,11 @@ namespace ESAITournamentInstaller
 			Console.WriteLine ("Done.");
 
 			Console.Write ("Merging with ESAITournament...");
+			CopyFolder (PayloadPath (), mp);
+			Console.WriteLine ("Done.");
 
+			Console.WriteLine ();
+			Console.WriteLine ("Everything looks okay.  Try to start Endless Space.");
 		}
 	}
 }
