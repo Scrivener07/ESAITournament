@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{85B58B65-3851-4B68-AC79-C8D1F4C9E80F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -85,4 +83,10 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <ProjectReference Include="..\ESInjector\ESInjector.csproj">
+      <Project>{B03AE9F7-19F0-4B56-BA79-7A9F843827B0}</Project>
+      <Name>ESInjector</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

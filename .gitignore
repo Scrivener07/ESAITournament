@@ -4,3 +4,5 @@ ESAITournament/ESAITournamentInstaller/bin/
 *.userprefs
 ESAITournament/ESAITournamentInstaller/obj/
 ESAITournament/ESAITournamentInstaller/Payload/Plugins/GalaxyGenerator/GalaxyGeneratorPlugin.dll
+ESAITournament/ESInjector/bin/
+ESAITournament/ESAITournamentInstaller/Payload/Plugins/GalaxyGenerator/ESInjector.dll

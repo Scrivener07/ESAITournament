@@ -47,6 +47,9 @@ namespace ESAITournamentInstaller
 		static string GalaxyGeneratorPath() {
 			return Environment.CurrentDirectory + "/../../../Amplitude.GalaxyGenerator/bin/Debug/Amplitude.GalaxyGenerator.dll";
 		}
+		static string ESInjectorPath() {
+			return Environment.CurrentDirectory + "/../../../ESInjector/bin/Debug/ESInjector.dll";
+		}
 
 		public static void Main (string[] args)
 		{
@@ -58,6 +61,7 @@ namespace ESAITournamentInstaller
 				Directory.CreateDirectory (galaxyDestPath);
 			}
 			File.Copy (GalaxyGeneratorPath (), galaxyDestPath + "/GalaxyGeneratorPlugin.dll", true);
+			File.Copy (ESInjectorPath (), galaxyDestPath + "/ESInjector.dll",true);
 			Console.WriteLine ("Done.");
 
 			Console.Write ("Creating default mod...");

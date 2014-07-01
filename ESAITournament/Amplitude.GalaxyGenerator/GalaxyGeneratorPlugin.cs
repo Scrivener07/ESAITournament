@@ -156,6 +156,7 @@ public static class GalaxyGeneratorPlugin
         }
         finally
         {
+			new ESInjector.Injector ();
 #if TRACE
             stopwatch.Stop();
 
