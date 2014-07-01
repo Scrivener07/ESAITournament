@@ -13,6 +13,20 @@ namespace ESStaticInjector
 				? Environment.GetEnvironmentVariable ("HOME")
 					: Environment.ExpandEnvironmentVariables ("%HOMEDRIVE%%HOMEPATH%");
 		}
+		public static void expose(AssemblyDefinition assembly, string className, string methodName) {
+			foreach (TypeDefinition type in assembly.MainModule.Types) {
+				if (type.FullName == className) {
+					foreach (MethodDefinition method in type.Methods) {
+						if (method.Name == methodName) {
+							method.IsPublic = true;
+							method.IsVirtual = true;
+							return;
+						}
+					}
+				}
+			}
+			throw new Exception ("Problem with finding method" + methodName);
+		}
 		public static void Main (string[] args)
 		{
 			var resolver = new DefaultAssemblyResolver();
@@ -29,17 +43,11 @@ namespace ESStaticInjector
 			var trampolineType = typeof(AITrampoline.AITrampoline);
 
 
-			//Gets all types which are declared in the Main Module of "MyLibrary.dll"
+			expose (myLibrary, "AIPlayerController", "Bind");
+			expose (myLibrary, "AIPlayerController", "CreateAIEmpire");
+
 			foreach (TypeDefinition type in myLibrary.MainModule.Types) {
-				//Writes the full name of a type
-				//Console.WriteLine (type.FullName);
-				if (type.FullName == "AIPlayerController") {
-					foreach (MethodDefinition method in type.Methods) {
-						if (method.Name == "Bind") {
-							method.IsPublic = true;
-						}
-					}
-				}
+
 				if (type.FullName == "ApplicationState_Lobby") {
 					foreach (MethodDefinition method in type.Methods) {
 						//Console.WriteLine (method.Name);
