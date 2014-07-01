@@ -1,51 +1,90 @@
-﻿// <copyright file="Constellation.cs" company="AMPLITUDE Studios">Copyright AMPLITUDE Studios. All rights reserved.</copyright>
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Constellation.cs" company="AMPLITUDE Studios">
+//   Copyright AMPLITUDE Studios. All rights reserved.
+//   
+//   This Source Code Form is subject to the terms of the Mozilla Public
+//   License, v. 2.0. If a copy of the MPL was not distributed with this
+//   file, You can obtain one at http://mozilla.org/MPL/2.0/ .
+// </copyright>
+// <summary>
+//   
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System.Collections.Generic;
+using Amplitude.GalaxyGenerator.Drawing;
 
 namespace Amplitude.GalaxyGenerator.Generation.Components
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Drawing;
-
+    /// <summary>
+    /// The constellation.
+    /// </summary>
     public class Constellation : List<StarSystem>
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Constellation"/> class.
+        /// </summary>
         public Constellation()
         {
-            this.Name = Galaxy.Instance.Configuration.getRandomConstellationName();
+            this.Name = Galaxy.Instance.Configuration.GetRandomConstellationName();
             if (Galaxy.Instance.Constellations.Contains(this))
             {
-                this.id = Galaxy.Instance.Constellations.FindIndex((c) => { return c == this; });
+                this.Id = Galaxy.Instance.Constellations.FindIndex(c => c == this);
             }
             else
             {
-                this.id = Galaxy.Instance.Constellations.Count;
+                this.Id = Galaxy.Instance.Constellations.Count;
                 Galaxy.Instance.Constellations.Add(this);
             }
         }
 
-        public int id { get; protected set; }
+        /// <summary>
+        /// Gets or sets the id.
+        /// </summary>
+        public int Id { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
         public string Name { get; protected set; }
 
-        public List<Constellation> adjacentConstellations()
+        /// <summary>
+        /// Retrieve the adjacent constellations
+        /// </summary>
+        /// <returns> Adjacent constellations </returns>
+        public List<Constellation> AdjacentConstellations()
         {
             List<Constellation> list = new List<Constellation>();
 
             foreach (StarSystem s in this)
-                foreach (StarSystem t in s.destinations)
+            {
+                foreach (StarSystem t in s.Destinations)
+                {
                     if (!this.Contains(t))
-                        list.Add(t.constellation());
+                    {
+                        list.Add(t.Constellation());
+                    }
+                }
+            }
 
             return list;
         }
 
-        public List<Color> presentRegionIndexes()
+        /// <summary>
+        /// Retrieves the region indices in this region
+        /// </summary>
+        /// <returns> Colors representing region indices </returns>
+        public List<Color> PresentRegionIndexes()
         {
             List<Color> indexes = new List<Color>();
 
             foreach (StarSystem s in this)
-                if (!indexes.Contains(s.regionIndex))
-                    indexes.Add(s.regionIndex);
+            {
+                if (!indexes.Contains(s.RegionIndex))
+                {
+                    indexes.Add(s.RegionIndex);
+                }
+            }
 
             return indexes;
         }

@@ -1,49 +1,79 @@
-﻿// <copyright file="ShapeManager.cs" company="AMPLITUDE Studios">Copyright AMPLITUDE Studios. All rights reserved.</copyright>
+﻿// <copyright file="ShapeManager.cs" company="AMPLITUDE Studios">
+//   Copyright AMPLITUDE Studios. All rights reserved.
+//   
+//   This Source Code Form is subject to the terms of the Mozilla Public
+//   License, v. 2.0. If a copy of the MPL was not distributed with this
+//   file, You can obtain one at http://mozilla.org/MPL/2.0/ .
+// </copyright>
+// <summary>
+//   
+// </summary>
+
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Xml;
 
 namespace Amplitude.GalaxyGenerator.Generation
 {
-    using System.Collections.Generic;
-    using System.Xml;
-
+    /// <summary>
+    /// Shape manager.
+    /// </summary>
     public class ShapeManager
     {
+        /// <summary>
+        /// Local instance of the Shape Manager for singleton
+        /// </summary>
         private static ShapeManager instance = null;
 
+        /// <summary>
+        /// Prevents a default instance of the <see cref="ShapeManager"/> class from being created from outside this class.
+        /// </summary>
         private ShapeManager()
         {
             this.Shapes = new Dictionary<string, Shape>();
         }
 
+        /// <summary>
+        /// Gets the instance.
+        /// </summary>
         public static ShapeManager Instance
         {
             get
             {
-                if (null == ShapeManager.instance)
+                if (instance == null)
                 {
-                    ShapeManager.instance = new ShapeManager();
+                    instance = new ShapeManager();
                 }
 
-                return ShapeManager.instance;
+                return instance;
             }
         }
 
+        /// <summary>
+        /// Gets the shapes.
+        /// </summary>
         public Dictionary<string, Shape> Shapes
         {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Loads shape files.
+        /// </summary>
+        /// <param name="pathToShapesFile"> The path to shapes file. </param>
         public static void Load(string pathToShapesFile)
         {
-            if (null == ShapeManager.instance)
-            {
-                ShapeManager.Instance.LoadShapes(pathToShapesFile);
-            }
+            Instance.LoadShapes(pathToShapesFile);
         }
 
-        public void LoadShapes(string pathToShapesFile)
+        /// <summary>
+        /// The load shapes.
+        /// </summary>
+        /// <param name="pathToShapesFile"> The path to shapes file. </param>
+        private void LoadShapes(string pathToShapesFile)
         {
-            using (System.Xml.XmlTextReader reader = new System.Xml.XmlTextReader(pathToShapesFile))
+            using (XmlTextReader reader = new XmlTextReader(pathToShapesFile))
             {
                 while (reader.Read())
                 {
@@ -51,7 +81,8 @@ namespace Amplitude.GalaxyGenerator.Generation
                     {
                         string name = reader.GetAttribute("Name");
                         Shape shape = new Shape(reader);
-//                        System.Diagnostics.Trace.WriteLine("shape name " + name);
+
+                        //// System.Diagnostics.Trace.WriteLine("shape name " + name);
 
                         if (!this.Shapes.ContainsKey(name))
                         {
@@ -65,10 +96,13 @@ namespace Amplitude.GalaxyGenerator.Generation
                 }
             }
 
-            System.Diagnostics.Trace.WriteLine("cross-checking shapes manager contents...");
+            Trace.WriteLine("cross-checking shapes manager contents...");
             foreach (string name in this.Shapes.Keys)
-                System.Diagnostics.Trace.WriteLine(name);
-            System.Diagnostics.Trace.WriteLine("...end of shapes manager contents cross-checking");
+            {
+                Trace.WriteLine(name);
+            }
+
+            Trace.WriteLine("...end of shapes manager contents cross-checking");
         }
     }
 }

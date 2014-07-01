@@ -1,28 +1,40 @@
-﻿// -----------------------------------------------------------------------
-// <copyright file="HomeTrait.cs" company="">
-// TODO: Update copyright text.
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="HomeTrait.cs" company="AMPLITUDE Studios">
+//   Copyright AMPLITUDE Studios. All rights reserved.
+//   
+//   This Source Code Form is subject to the terms of the Mozilla Public
+//   License, v. 2.0. If a copy of the MPL was not distributed with this
+//   file, You can obtain one at http://mozilla.org/MPL/2.0/ .
 // </copyright>
-// -----------------------------------------------------------------------
+// <summary>
+//   
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
+using Amplitude.GalaxyGenerator.Generation.Components;
 
 namespace Amplitude.GalaxyGenerator.Generation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using Amplitude.GalaxyGenerator.Generation.Components;
-    using System.Xml;
-
     /// <summary>
-    /// TODO: Update summary.
+    /// Trait for starting starSystem
     /// </summary>
     public class HomeTrait
     {
-        protected List<HomeTrait.Component> components;
+        /// <summary>
+        /// List of components for this trait.
+        /// </summary>
+        private List<Component> components;
 
-        public HomeTrait(System.Xml.XmlTextReader xr)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HomeTrait"/> class.
+        /// </summary>
+        /// <param name="xr"> Xml Reader </param>
+        public HomeTrait(XmlTextReader xr)
         {
-            Component.AppliesTo target = Component.AppliesTo.WORLD;
+            Component.AppliesTo target = Component.AppliesTo.World;
             Component bit = null;
 
             this.components = new List<Component>();
@@ -32,120 +44,185 @@ namespace Amplitude.GalaxyGenerator.Generation
                 xr.Read();
                 if (xr.NodeType == XmlNodeType.Element)
                 {
-                    if (xr.Name == "HomeStar") { target = Component.AppliesTo.STAR; }
-                    else if (xr.Name == "HomePlanet") { target = Component.AppliesTo.WORLD; }
-                    else if (xr.Name == "OtherPlanets") { target = Component.AppliesTo.OTHER; }
-                    else
+                    switch (xr.Name)
                     {
-                        if (xr.Name == "OverridePlanetsInSystem")
-                        {
-                            bit = new HomeTrait.Component_PlanetsInSystem();
-                            bit.target = Component.AppliesTo.STAR;
-                        }
-                        else if (xr.Name == "OverrideStarType")
-                        {
-                            bit = new Component_OverrideStarType();
-                            bit.target = Component.AppliesTo.STAR;
-                        }
-                        else if (xr.Name == "OverrideType")
-                        {
-                            bit = new Component_OverrideType();
-                            bit.target = target;
-                        }
-                        else if (xr.Name == "OverrideSize")
-                        {
-                            bit = new Component_OverrideSize();
-                            bit.target = target;
-                        }
-                        else if (xr.Name == "OverrideAnomaly")
-                        {
-                            bit = new Component_OverrideAnomaly();
-                            bit.target = target;
-                        }
-                        else if (xr.Name == "InhibitAnomalies")
-                        {
-                            bit = new Component_InhibitAnomalies();
-                            bit.target = target;
-                        }
-                        else if (xr.Name == "InhibitLuxuryResources")
-                        {
-                            bit = new Component_InhibitLuxuries();
-                            bit.target = target;
-                        }
-                        else if (xr.Name == "InhibitStrategicResources")
-                        {
-                            bit = new Component_InhibitStrategics();
-                            bit.target = target;
-                        }
+                        case "HomeStar":
+                            target = Component.AppliesTo.Star;
+                            break;
+                        case "HomePlanet":
+                            target = Component.AppliesTo.World;
+                            break;
+                        case "OtherPlanets":
+                            target = Component.AppliesTo.Other;
+                            break;
+                        default:
+                            switch (xr.Name)
+                            {
+                                case "OverridePlanetsInSystem":
+                                    bit = new ComponentPlanetsInSystem { Target = Component.AppliesTo.Star };
+                                    break;
+                                case "OverrideStarType":
+                                    bit = new ComponentOverrideStarType { Target = Component.AppliesTo.Star };
+                                    break;
+                                case "OverrideType":
+                                    bit = new ComponentOverrideType { Target = target };
+                                    break;
+                                case "OverrideSize":
+                                    bit = new ComponentOverrideSize { Target = target };
+                                    break;
+                                case "OverrideAnomaly":
+                                    bit = new ComponentOverrideAnomaly { Target = target };
+                                    break;
+                                case "InhibitAnomalies":
+                                    bit = new ComponentInhibitAnomalies { Target = target };
+                                    break;
+                                case "InhibitLuxuryResources":
+                                    bit = new ComponentInhibitLuxuries { Target = target };
+                                    break;
+                                case "InhibitStrategicResources":
+                                    bit = new ComponentInhibitStrategics { Target = target };
+                                    break;
+                            }
 
-                        if (null != bit)
-                        {
-                            bit.Read(xr);
-                            this.components.Add(bit);
-                        }
+                            if (null != bit)
+                            {
+                                bit.Read(xr);
+                                this.components.Add(bit);
+                            }
+
+                            break;
                     }
                 }
             }
-            while (!( (xr.NodeType==XmlNodeType.EndElement) && (xr.Name=="Trait") ));
+            while (!((xr.NodeType == XmlNodeType.EndElement) && (xr.Name == "Trait")));
         }
 
-        public void Apply(StarSystem star)
+        /// <summary>
+        /// Applies traits to starsystems
+        /// </summary>
+        /// <param name="starSystem"> Target starSystem </param>
+        public void Apply(StarSystem starSystem)
         {
-            List<HomeTrait.Component> localComponents = new List<Component>();
+            List<Component> localComponents = new List<Component>();
 
-            System.Diagnostics.Trace.WriteLine("Applying Trait " + Settings.Instance.homeGenerationTraits.First((pair) => { return pair.Value == this; }).Key);
+            System.Diagnostics.Trace.WriteLine("Applying Trait " + Settings.Instance.HomeGenerationTraits.First(pair => pair.Value == this).Key);
 
             localComponents.Clear();
-            localComponents.AddRange(this.components.FindAll((bit) =>
-                { return bit.target == Component.AppliesTo.STAR; }));
-            foreach (HomeTrait.Component c in localComponents)
+            localComponents.AddRange(this.components.FindAll(bit => bit.Target == Component.AppliesTo.Star));
+
+            foreach (Component c in localComponents)
             {
-                c.Apply(new HomeGenerator.Pattern (star));
+                c.Apply(new HomeGenerator.Pattern(starSystem));
             }
 
             localComponents.Clear();
-            localComponents.AddRange(this.components.FindAll((bit) =>
-                { return bit.target == Component.AppliesTo.WORLD; }));
-            foreach (HomeTrait.Component c in localComponents)
+            localComponents.AddRange(this.components.FindAll(bit => bit.Target == Component.AppliesTo.World));
+
+            foreach (Component c in localComponents)
             {
-                c.Apply(new HomeGenerator.Pattern(star));
+                c.Apply(new HomeGenerator.Pattern(starSystem));
             }
 
             localComponents.Clear();
-            localComponents.AddRange(this.components.FindAll((bit) =>
-                { return bit.target == Component.AppliesTo.OTHER; }));
-            foreach (HomeTrait.Component c in localComponents)
+            localComponents.AddRange(this.components.FindAll(bit => bit.Target == Component.AppliesTo.Other));
+
+            foreach (Component c in localComponents)
             {
-                c.Apply(new HomeGenerator.Pattern(star));
+                c.Apply(new HomeGenerator.Pattern(starSystem));
             }
         }
 
+        /// <summary>
+        /// HomeTrait component definition
+        /// </summary>
         protected class Component
         {
-            public enum AppliesTo { STAR, WORLD, OTHER };
-
-            public AppliesTo target { get; set; }
-            public virtual void Apply(HomeGenerator.Pattern hp) { }
-            public virtual void Read(System.Xml.XmlTextReader xr) { }
-
-        }
-
-        protected class Component_Override : HomeTrait.Component
-        {
-            public double probability { get; set; }
-            public SortedDictionary<string, int> weights { get; set; }
-
-            public Component_Override()
+            /// <summary>
+            /// To what level the component applies to.
+            /// </summary>
+            public enum AppliesTo
             {
-                this.weights = new SortedDictionary<string,int>();
+                /// <summary>
+                /// Component applies to a Star
+                /// </summary>
+                Star,
+
+                /// <summary>
+                /// Component applies to a World
+                /// </summary>
+                World,
+
+                /// <summary>
+                /// Component applies to something else
+                /// </summary>
+                Other
             }
 
-            protected void internalRead(System.Xml.XmlTextReader xr, string component, string element)
+            /// <summary>
+            /// Gets or sets the target.
+            /// </summary>
+            public AppliesTo Target { get; set; }
+
+            /// <summary>
+            /// Applies a pattern to a Home
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public virtual void Apply(HomeGenerator.Pattern hp)
+            {
+            }
+
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public virtual void Read(XmlTextReader xr)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Specific component implementation
+        /// </summary>
+        protected class ComponentOverride : Component
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ComponentOverride"/> class.
+            /// </summary>
+            public ComponentOverride()
+            {
+                this.Weights = new SortedDictionary<string, int>();
+            }
+
+            /// <summary>
+            /// Gets or sets the probability of this component occurrence.
+            /// </summary>
+            public double Probability { get; set; }
+
+            /// <summary>
+            /// Gets or sets the weights for this component.
+            /// </summary>
+            public SortedDictionary<string, int> Weights { get; set; }
+
+            /// <summary>
+            /// Reads an xml to retrieve components and elements
+            /// </summary>
+            /// <param name="xr"> Xml reader </param>
+            /// <param name="component"> Target component. </param>
+            /// <param name="element"> Target element. </param>
+            protected void InternalRead(XmlTextReader xr, string component, string element)
             {
                 if (xr.AttributeCount > 0)
-                    this.probability = Double.Parse(xr.GetAttribute("Probability"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+                {
+                    this.Probability = double.Parse(xr.GetAttribute("Probability"), System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+                }
                 else
-                    this.probability = 1.0;
+                {
+                    this.Probability = 1.0;
+                }
 
                 do
                 {
@@ -154,34 +231,47 @@ namespace Amplitude.GalaxyGenerator.Generation
                     {
                         if (xr.Name == element)
                         {
-                            if (xr.AttributeCount == 2)
-                                this.weights.Add(xr.GetAttribute("Name"), Int32.Parse(xr.GetAttribute("Weight")));
-                            else if (xr.AttributeCount == 1)
-                                this.weights.Add(xr.GetAttribute("Name"), 1);
+                            switch (xr.AttributeCount)
+                            {
+                                case 2:
+                                    this.Weights.Add(xr.GetAttribute("Name"), int.Parse(xr.GetAttribute("Weight")));
+                                    break;
+                                case 1:
+                                    this.Weights.Add(xr.GetAttribute("Name"), 1);
+                                    break;
+                            }
                         }
                     }
                 }
                 while (!((xr.NodeType == XmlNodeType.EndElement) && (xr.Name == component)));
             }
 
-            protected string getRandomOverride()
+            /// <summary>
+            /// Returns a random element based on their probabilities
+            /// </summary>
+            /// <returns>
+            /// Chosen element's name
+            /// </returns>
+            protected string GetRandomOverride()
             {
                 List<string> possibleElements = new List<string>();
-                int i, n;
                 string element = null;
 
-                if (GalaxyGeneratorPlugin.random.NextDouble() <= this.probability)
+                if (GalaxyGeneratorPlugin.Random.NextDouble() <= this.Probability)
                 {
-                    foreach (string s in this.weights.Keys)
+                    foreach (string s in this.Weights.Keys)
                     {
-                        n = this.weights[s];
-                        i = 0;
-                        for (; i < n; i++)
+                        int n = this.Weights[s];
+
+                        for (int i = 0; i < n; i++)
+                        {
                             possibleElements.Add(s);
+                        }
                     }
+
                     if (possibleElements.Count > 0)
                     {
-                        element = possibleElements[GalaxyGeneratorPlugin.random.Next(possibleElements.Count)];
+                        element = possibleElements[GalaxyGeneratorPlugin.Random.Next(possibleElements.Count)];
                     }
                 }
 
@@ -189,33 +279,67 @@ namespace Amplitude.GalaxyGenerator.Generation
             }
         }
 
-        protected class Component_Inhibit : HomeTrait.Component
+        /// <summary>
+        /// Component Inhibitor.
+        /// </summary>
+        protected class ComponentInhibit : Component
         {
-            public List<string> inhibitList { set; protected get; }
-            protected bool allInhibited;
-
-            protected List<Planet> tgtPlanets;
-
-            public Component_Inhibit()
+            /// <summary>
+            /// Initializes a new instance of the <see cref="ComponentInhibit"/> class.
+            /// </summary>
+            public ComponentInhibit()
             {
-                this.allInhibited = false;
-                this.inhibitList = new List<string>();
-                this.tgtPlanets = new List<Planet>();
+                this.AllInhibited = false;
+                this.InhibitList = new List<string>();
+                this.TargetPlanets = new List<Planet>();
             }
 
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Gets or sets the inhibit list.
+            /// </summary>
+            public List<string> InhibitList { protected get; set; }
+
+            /// <summary>
+            /// Gets or sets a value indicating whether all inhibited.
+            /// </summary>
+            protected bool AllInhibited { get; set; }
+
+            /// <summary>
+            /// Gets the Targeted planets.
+            /// </summary>
+            protected List<Planet> TargetPlanets { get; private set; }
+
+            /// <summary>
+            /// Applies a pattern to targeted planets
+            /// </summary>
+            /// <param name="hp">
+            /// The hp.
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 base.Apply(hp);
 
-                if (this.target == AppliesTo.STAR)
-                    tgtPlanets = hp.Star.Planets;
-                else if (this.target == AppliesTo.WORLD)
-                    tgtPlanets.Add(hp.HomeWorld);
-                else if (this.target == AppliesTo.OTHER)
-                    tgtPlanets = hp.OtherPlanets;
+                switch (this.Target)
+                {
+                    case AppliesTo.Star:
+                        this.TargetPlanets = hp.Star.Planets;
+                        break;
+                    case AppliesTo.World:
+                        this.TargetPlanets.Add(hp.HomeWorld);
+                        break;
+                    case AppliesTo.Other:
+                        this.TargetPlanets = hp.OtherPlanets;
+                        break;
+                }
             }
 
-            public void internalRead(System.Xml.XmlTextReader xr, string component, string element)
+            /// <summary>
+            /// Reads an xml to retrieve components and elements
+            /// </summary>
+            /// <param name="xr"> Xml reader </param>
+            /// <param name="component"> Target component. </param>
+            /// <param name="element"> Target element. </param>
+            public void InternalRead(XmlTextReader xr, string component, string element)
             {
                 do
                 {
@@ -225,11 +349,11 @@ namespace Amplitude.GalaxyGenerator.Generation
                     {
                         if (xr.Name == element)
                         {
-                            this.inhibitList.Add(xr.GetAttribute("Name"));
+                            this.InhibitList.Add(xr.GetAttribute("Name"));
                         }
                         else if (xr.Name == "All")
                         {
-                            this.allInhibited = true;
+                            this.AllInhibited = true;
                         }
                     }
                 }
@@ -237,44 +361,67 @@ namespace Amplitude.GalaxyGenerator.Generation
             }
         }
 
-        protected class Component_OverrideStarType : HomeTrait.Component_Override
+        /// <summary>
+        /// The component override starSystem type.
+        /// </summary>
+        protected class ComponentOverrideStarType : ComponentOverride
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 base.Apply(hp);
 
-                string modifiedStarType = base.getRandomOverride();
+                string modifiedStarType = GetRandomOverride();
 
-                if (null != modifiedStarType)
+                if (modifiedStarType != null)
                 {
-                    if (hp.Star.type != modifiedStarType)
-                    {
-                        hp.Star.type = modifiedStarType;
-                        //hp.Star.GeneratePlanets();
-                    }
+                    hp.Star.Type = modifiedStarType;
+                    //// hp.Star.GeneratePlanets();
                 }
             }
 
-            override public void Read(System.Xml.XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                base.internalRead(xr, "OverrideStarType", "StarType");
+                this.InternalRead(xr, "OverrideStarType", "StarType");
             }
         }
 
-        protected class Component_PlanetsInSystem : HomeTrait.Component_Override
+        /// <summary>
+        /// The component planets in system.
+        /// </summary>
+        protected class ComponentPlanetsInSystem : ComponentOverride
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 int modifiedNumber;
-                string mod;
 
-                if (GalaxyGeneratorPlugin.random.NextDouble() > this.probability) return;
+                if (GalaxyGeneratorPlugin.Random.NextDouble() > this.Probability)
+                {
+                    return;
+                }
 
                 base.Apply(hp);
 
-                mod = base.getRandomOverride();
-                if (Int32.TryParse(mod, out modifiedNumber))
+                string mod = this.GetRandomOverride();
+                if (int.TryParse(mod, out modifiedNumber))
                 {
                     hp.Star.GeneratePlanets(modifiedNumber);
                 }
@@ -284,183 +431,305 @@ namespace Amplitude.GalaxyGenerator.Generation
                 }
             }
 
-            override public void Read(XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                base.internalRead(xr, "OverridePlanetsInSystem", "Quantity");
+                this.InternalRead(xr, "OverridePlanetsInSystem", "Quantity");
             }
         }
 
-        protected class Component_OverrideType : HomeTrait.Component_Override
+        /// <summary>
+        /// The component override type.
+        /// </summary>
+        protected class ComponentOverrideType : ComponentOverride
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 base.Apply(hp);
 
-                string modifiedPlanetType = base.getRandomOverride();
-                if (null == modifiedPlanetType) return;
-
-                if (this.target == Component.AppliesTo.WORLD)
+                string modifiedPlanetType = GetRandomOverride();
+                if (null == modifiedPlanetType)
                 {
-                    if (GalaxyGeneratorPlugin.random.NextDouble() > this.probability) return; 
+                    return;
+                }
+
+                if (this.Target == AppliesTo.World)
+                {
+                    if (GalaxyGeneratorPlugin.Random.NextDouble() > this.Probability)
+                    {
+                        return;
+                    }
+
                     hp.HomeWorld.ReCreateType(modifiedPlanetType);
                 }
-                else if (this.target == Component.AppliesTo.OTHER)
+                else if (this.Target == AppliesTo.Other)
                 {
                     foreach (Planet p in hp.OtherPlanets)
                     {
-                        modifiedPlanetType = base.getRandomOverride();
-                        if ((null != modifiedPlanetType) && (GalaxyGeneratorPlugin.random.NextDouble() <= this.probability))
+                        modifiedPlanetType = this.GetRandomOverride();
+                        if ((null != modifiedPlanetType) &&
+                             (GalaxyGeneratorPlugin.Random.NextDouble() <= this.Probability))
+                        {
                             p.ReCreateType(modifiedPlanetType);
+                        }
                     }
                 }
             }
 
-            override public void Read(System.Xml.XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                base.internalRead(xr, "OverrideType", "Type");
+                this.InternalRead(xr, "OverrideType", "Type");
             }
         }
 
-        protected class Component_OverrideSize : HomeTrait.Component_Override
+        /// <summary>
+        /// The component override size.
+        /// </summary>
+        protected class ComponentOverrideSize : ComponentOverride
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 string modifiedPlanetSize;
 
                 base.Apply(hp);
 
-                if (this.target == Component.AppliesTo.WORLD)
+                if (this.Target == AppliesTo.World)
                 {
-                    if (GalaxyGeneratorPlugin.random.NextDouble() > this.probability) return;
-                    modifiedPlanetSize = base.getRandomOverride();
+                    if (GalaxyGeneratorPlugin.Random.NextDouble() > this.Probability)
+                    {
+                        return;
+                    }
+
+                    modifiedPlanetSize = this.GetRandomOverride();
                     if (null != modifiedPlanetSize)
-                        hp.HomeWorld.size = modifiedPlanetSize;
+                    {
+                        hp.HomeWorld.Size = modifiedPlanetSize;
+                    }
                 }
-                else if (this.target == Component.AppliesTo.OTHER)
+                else if (this.Target == AppliesTo.Other)
                 {
                     foreach (Planet p in hp.OtherPlanets)
                     {
-                        modifiedPlanetSize = base.getRandomOverride();
-                        if ((null != modifiedPlanetSize) && (GalaxyGeneratorPlugin.random.NextDouble() <= this.probability))
-                            p.size = modifiedPlanetSize;
+                        modifiedPlanetSize = this.GetRandomOverride();
+                        if ((null != modifiedPlanetSize) &&
+                             (GalaxyGeneratorPlugin.Random.NextDouble() <= this.Probability))
+                        {
+                            p.Size = modifiedPlanetSize;
+                        }
                     }
                 }
             }
 
-            override public void Read(System.Xml.XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                internalRead(xr, "OverrideSize", "Size");
+                this.InternalRead(xr, "OverrideSize", "Size");
             }
         }
 
-        protected class Component_OverrideAnomaly : HomeTrait.Component_Override
+        /// <summary>
+        /// The component override anomaly.
+        /// </summary>
+        protected class ComponentOverrideAnomaly : ComponentOverride
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 string modifiedAnomaly;
 
                 base.Apply(hp);
 
-                if (this.target == Component.AppliesTo.WORLD)
+                if (this.Target == AppliesTo.World)
                 {
-                    if (GalaxyGeneratorPlugin.random.NextDouble() > this.probability) return; 
-                    modifiedAnomaly = base.getRandomOverride();
+                    if (GalaxyGeneratorPlugin.Random.NextDouble() > this.Probability)
+                    {
+                        return;
+                    }
+
+                    modifiedAnomaly = this.GetRandomOverride();
                     if (null != modifiedAnomaly)
-                        hp.HomeWorld.anomaly = modifiedAnomaly;
+                    {
+                        hp.HomeWorld.Anomaly = modifiedAnomaly;
+                    }
                 }
-                else if (this.target == Component.AppliesTo.OTHER)
+                else if (this.Target == AppliesTo.Other)
                 {
                     foreach (Planet p in hp.OtherPlanets)
                     {
-                        modifiedAnomaly = base.getRandomOverride();
-                        if ((null != modifiedAnomaly) && (GalaxyGeneratorPlugin.random.NextDouble() <= this.probability))
-                            p.anomaly = modifiedAnomaly;
+                        modifiedAnomaly = this.GetRandomOverride();
+                        if ((null != modifiedAnomaly) && (GalaxyGeneratorPlugin.Random.NextDouble() <= this.Probability))
+                        {
+                            p.Anomaly = modifiedAnomaly;
+                        }
                     }
                 }
             }
 
-            override public void Read(System.Xml.XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                internalRead(xr, "OverrideAnomaly", "Anomaly");
+                this.InternalRead(xr, "OverrideAnomaly", "Anomaly");
             }
         }
 
-        protected class Component_InhibitAnomalies : HomeTrait.Component_Inhibit
+        /// <summary>
+        /// The component inhibit anomalies.
+        /// </summary>
+        protected class ComponentInhibitAnomalies : ComponentInhibit
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 base.Apply(hp);
 
-                if ((this.inhibitList.Count == 0) && this.allInhibited)
+                if ((this.InhibitList.Count == 0) && this.AllInhibited)
                 {
-                    this.inhibitList.AddRange(Settings.Instance.anomalyNames);
+                    this.InhibitList.AddRange(Settings.Instance.AnomalyNames);
                 }
 
-                foreach (Planet p in tgtPlanets)
+                foreach (Planet p in this.TargetPlanets)
                 {
-                    p.inhibitedAnomalies.AddRange(this.inhibitList);
+                    p.InhibitedAnomalies.AddRange(this.InhibitList);
                     p.ApplyInhibitAnomalies();
                 }
             }
 
-            override public void Read(System.Xml.XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                internalRead(xr, "InhibitAnomalies", "Anomaly");
+                this.InternalRead(xr, "InhibitAnomalies", "Anomaly");
             }
         }
 
-        protected class Component_InhibitLuxuries : HomeTrait.Component_Inhibit
+        /// <summary>
+        /// The component inhibit luxuries.
+        /// </summary>
+        protected class ComponentInhibitLuxuries : ComponentInhibit
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 base.Apply(hp);
 
-                if (this.allInhibited)
+                if (this.AllInhibited)
                 {
-                    this.inhibitList = Settings.Instance.luxuryResourceNames.ToList();
+                    this.InhibitList = Settings.Instance.LuxuryResourceNames.ToList();
                 }
 
-                foreach (Planet p in tgtPlanets)
+                foreach (Planet p in this.TargetPlanets)
                 {
-                    p.inhibitedLuxuries = this.inhibitList;
+                    p.InhibitedLuxuries = this.InhibitList;
                 }
             }
 
-            override public void Read(System.Xml.XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                internalRead(xr, "InhibitLuxurieResources", "LuxuryResource");
+                this.InternalRead(xr, "InhibitLuxurieResources", "LuxuryResource");
             }
         }
 
-        protected class Component_InhibitStrategics : HomeTrait.Component_Inhibit
+        /// <summary>
+        /// The component inhibit strategics.
+        /// </summary>
+        protected class ComponentInhibitStrategics : ComponentInhibit
         {
-            override public void Apply(HomeGenerator.Pattern hp)
+            /// <summary>
+            /// Applies a pattern.
+            /// </summary>
+            /// <param name="hp">
+            /// Pattern which should be applied
+            /// </param>
+            public override void Apply(HomeGenerator.Pattern hp)
             {
                 base.Apply(hp);
 
-                if (this.allInhibited)
+                if (this.AllInhibited)
                 {
-                   this.inhibitList = Settings.Instance.strategicResourceNames.ToList();
+                    this.InhibitList = Settings.Instance.StrategicResourceNames.ToList();
                 }
 
-                foreach (Planet p in tgtPlanets)
+                foreach (Planet p in this.TargetPlanets)
                 {
-                    p.inhibitedStrategics = this.inhibitList;
+                    p.InhibitedStrategics = this.InhibitList;
                 }
             }
 
-            override public void Read(System.Xml.XmlTextReader xr)
+            /// <summary>
+            /// Reads the source XML
+            /// </summary>
+            /// <param name="xr">
+            /// Xml Reader
+            /// </param>
+            public override void Read(XmlTextReader xr)
             {
                 base.Read(xr);
-                internalRead(xr, "InhibitStrategicResources", "StrategicResource");
+                this.InternalRead(xr, "InhibitStrategicResources", "StrategicResource");
             }
         }
     }
-
 }

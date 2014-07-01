@@ -1,33 +1,210 @@
-﻿// <copyright file="Galaxy.cs" company="AMPLITUDE Studios">Copyright AMPLITUDE Studios. All rights reserved.</copyright>
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Galaxy.cs" company="AMPLITUDE Studios">
+//   Copyright AMPLITUDE Studios. All rights reserved.
+//   
+//   This Source Code Form is subject to the terms of the Mozilla Public
+//   License, v. 2.0. If a copy of the MPL was not distributed with this
+//   file, You can obtain one at http://mozilla.org/MPL/2.0/ .
+// </copyright>
+// <summary>
+//   
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Xml;
+using Amplitude.GalaxyGenerator.Drawing;
+using Amplitude.GalaxyGenerator.Generation.Builders;
 
 namespace Amplitude.GalaxyGenerator.Generation.Components
 {
-    using System;
-    using System.Drawing;
-    using System.Drawing.Drawing2D;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Xml;
-
-    using Builders;
-
+    /// <summary>
+    /// The galaxy.
+    /// </summary>
     public class Galaxy
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Galaxy"/> class.
+        /// </summary>
+        /// <param name="configuration"> Configuration for this generation </param>
+        protected Galaxy(Configuration configuration)
+        {
+            ////Galaxy.Instance = this;
+            this.IsValid = true;
+
+            Trace.WriteLine("Galaxy-constructor-1");
+
+            Instance = this;
+
+            this.BuilderList = new List<Builder>();
+
+            StarBuilder starBuilder = new StarBuilder();
+            ConstellationBuilder constellationsBuilder = new ConstellationBuilder();
+            WarpBuilder warpBuilder = new WarpBuilder();
+            SpawnBuilder spawnBuilder = new SpawnBuilder();
+            PlanetBuilder planetBuilder = new PlanetBuilder();
+            HomeBuilder homeBuilder = new HomeBuilder();
+            StrategicResourceBuilder strategicResourceBuilder = new StrategicResourceBuilder();
+            LuxuryResourceBuilder luxuryResourceBuilder = new LuxuryResourceBuilder();
+
+            Trace.WriteLine("Galaxy-constructor-2");
+
+            this.BuilderList.Add(starBuilder);
+            this.BuilderList.Add(warpBuilder); // first pass
+            this.BuilderList.Add(constellationsBuilder);
+            this.BuilderList.Add(warpBuilder); // second pass
+            this.BuilderList.Add(spawnBuilder);
+            this.BuilderList.Add(planetBuilder);
+            this.BuilderList.Add(homeBuilder);
+            this.BuilderList.Add(strategicResourceBuilder);
+            this.BuilderList.Add(luxuryResourceBuilder);
+
+            Trace.WriteLine("Galaxy-constructor-3");
+
+            this.Configuration = configuration;
+
+            this.Stars = new List<StarSystem>();
+            this.Warps = new List<WarpLine>();
+            this.Constellations = new List<Constellation>();
+            this.Regions = new List<Region>();
+            this.SpawnStars = new List<StarSystem>();
+
+            Trace.WriteLine("Galaxy-constructor-4");
+
+            foreach (Builder builder in this.BuilderList)
+            {
+                if (this.IsValid)
+                {
+                    builder.Execute();
+                    this.IsValid = this.IsValid && builder.Result;
+                }
+            }
+
+            Trace.WriteLine("Galaxy-constructor-5");
+
+            if (!this.IsValid)
+            {
+                Trace.WriteLine("--Galaxy generation failed--");
+                Trace.WriteLine("--Generation defects summary--");
+                foreach (Builder b in this.BuilderList)
+                {
+                    foreach (string text in b.Defects)
+                    {
+                        Trace.WriteLine(b.Name + " -> " + text);
+                    }
+                }
+
+                Trace.WriteLine("--Generation defects end--");
+            }
+        }
+
+        /// <summary>
+        /// Finalizes an instance of the <see cref="Galaxy"/> class. 
+        /// </summary>
+        ~Galaxy()
+        {
+            Instance = null;
+            this.Configuration.ResetNames();
+            this.Planets.Clear();
+        }
+
+        /// <summary>
+        /// Gets or sets the instance.
+        /// </summary>
         public static Galaxy Instance { get; protected set; }
-        public static void Generate(Configuration configuration) { if (Instance == null) new Galaxy(configuration); }
+
+        /// <summary>
+        /// Gets or sets the configuration.
+        /// </summary>
+        public Configuration Configuration { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the stars.
+        /// </summary>
+        public List<StarSystem> Stars { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the warps.
+        /// </summary>
+        public List<WarpLine> Warps { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the constellations.
+        /// </summary>
+        public List<Constellation> Constellations { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the regions.
+        /// </summary>
+        public List<Region> Regions { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the spawn stars.
+        /// </summary>
+        public List<StarSystem> SpawnStars { get; protected set; }
+
+        /// <summary>
+        /// Gets the planets.
+        /// </summary>
+        public List<Planet> Planets
+        {
+            get
+            {
+                List<Planet> list = new List<Planet>();
+                foreach (StarSystem s in this.Stars)
+                {
+                    list.AddRange(s.Planets);
+                }
+
+                return list;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether is valid.
+        /// </summary>
+        public bool IsValid { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the builder list.
+        /// </summary>
+        private List<Builder> BuilderList { get; set; }
+
+        /// <summary>
+        /// Generates a galaxy
+        /// </summary>
+        /// <param name="configuration"> Configuration instance for this generation </param>
+        public static void Generate(Configuration configuration)
+        {
+            Trace.WriteLine("Galaxy-StaticGenerate-1");
+            if (Instance == null)
+            {
+                Trace.WriteLine("Galaxy-StaticGenerate-2");
+                Instance = new Galaxy(configuration);
+                Trace.WriteLine("Galaxy-StaticGenerate-3");
+            }
+
+            Trace.WriteLine("Galaxy-StaticGenerate-4");
+        }
+
+        /// <summary>
+        /// Releases the galaxy.
+        /// </summary>
         public static void Release()
         {
             Instance = null;
         }
 
-        public Configuration Configuration { get; protected set; }
-
+        /// <summary>
+        /// Writes the Galaxy to xml
+        /// </summary>
+        /// <param name="xw"> Xml Writer </param>
         public void WriteXml(XmlWriter xw)
         {
-            Dictionary<Color, int> hr = new Dictionary<Color,int>();
+            Dictionary<Color, int> hr = new Dictionary<Color, int>();
             double x, z, minX, minY, minZ, maxX, maxY, maxZ;
-            int i, j;
 
             minX = 9999;
             minY = 0;
@@ -37,22 +214,34 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
             maxZ = -9999;
             foreach (StarSystem s in this.Stars)
             {
-                x = s.position.X;
-                z = s.position.Y;
+                x = s.Position.X;
+                z = s.Position.Y;
                 if (x > maxX)
+                {
                     maxX = x;
+                }
+
                 if (x < minX)
+                {
                     minX = x;
+                }
+
                 if (z > maxZ)
+                {
                     maxZ = z;
+                }
+
                 if (z < minZ)
+                {
                     minZ = z;
+                }
             }
+
             xw.WriteStartElement("Dimensions");
-            xw.WriteStartElement ("Size");
-            xw.WriteAttributeString("X", (maxX-minX).ToString());
-            xw.WriteAttributeString("Y", (maxY-minY).ToString());
-            xw.WriteAttributeString("Z", (maxZ-minZ).ToString());
+            xw.WriteStartElement("Size");
+            xw.WriteAttributeString("X", (maxX - minX).ToString());
+            xw.WriteAttributeString("Y", (maxY - minY).ToString());
+            xw.WriteAttributeString("Z", (maxZ - minZ).ToString());
             xw.WriteEndElement();
             xw.WriteStartElement("Bounds");
             xw.WriteAttributeString("MaxX", maxX.ToString());
@@ -68,345 +257,222 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
             foreach (StarSystem s in this.SpawnStars)
             {
                 xw.WriteStartElement("Home");
-                xw.WriteAttributeString("System", s.id.ToString());
+                xw.WriteAttributeString("System", s.Id.ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("Regions");
             foreach (StarSystem s in this.Stars)
             {
-                if (hr.Keys.Contains(s.regionIndex))
-                    hr[s.regionIndex]++;
+                if (hr.Keys.Contains(s.RegionIndex))
+                {
+                    hr[s.RegionIndex]++;
+                }
                 else
-                    hr.Add(s.regionIndex, 1);
+                {
+                    hr.Add(s.RegionIndex, 1);
+                }
             }
+
             foreach (Color rgb in hr.Keys)
             {
                 xw.WriteStartElement("Region");
-                xw.WriteAttributeString("Color", "Red="+rgb.R.ToString()+" Green="+rgb.G.ToString()+" Blue="+rgb.B.ToString());
+                xw.WriteAttributeString("Color", "Red=" + rgb.R.ToString() + " Green=" + rgb.G.ToString() + " Blue=" + rgb.B.ToString());
                 xw.WriteAttributeString("NumStars", hr[rgb].ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("Constellations");
             foreach (Constellation c in this.Constellations)
             {
-                xw.WriteStartElement ("Constellation");
+                xw.WriteStartElement("Constellation");
                 xw.WriteAttributeString("Name", c.Name);
-                xw.WriteAttributeString("Id", c.id.ToString());
+                xw.WriteAttributeString("Id", c.Id.ToString());
                 xw.WriteAttributeString("Population", c.Count.ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteElementString("Population", this.Stars.Count.ToString());
 
             xw.WriteStartElement("Systems");
-            foreach (StarSystem s in this.Stars)
+            foreach (StarSystem starSystem in this.Stars)
             {
                 xw.WriteStartElement("System");
-                if (s.constellation() != null)
-                    xw.WriteAttributeString("Constellation", s.constellation().id.ToString());
+                if (starSystem.Constellation() != null)
+                {
+                    xw.WriteAttributeString("Constellation", starSystem.Constellation().Id.ToString());
+                }
                 else
                 {
                     xw.WriteAttributeString("Constellation", "NotInConstellation");
-                    System.Diagnostics.Trace.WriteLine("System n°" + s.id.ToString() + " is not in a constellation !");
+                    Trace.WriteLine("System n°" + starSystem.Id.ToString() + " is not in a constellation !");
                 }
-                xw.WriteAttributeString("Name", s.Name);
-                xw.WriteAttributeString("Type", s.type);
-                xw.WriteAttributeString("Id", s.id.ToString());
-                xw.WriteAttributeString("X", s.position.X.ToString());
+
+                xw.WriteAttributeString("Name", starSystem.Name);
+                xw.WriteAttributeString("Type", starSystem.Type);
+                xw.WriteAttributeString("Id", starSystem.Id.ToString());
+                xw.WriteAttributeString("X", starSystem.Position.X.ToString());
                 xw.WriteAttributeString("Y", "0");
-                xw.WriteAttributeString("Z", s.position.Y.ToString());
+                xw.WriteAttributeString("Z", starSystem.Position.Y.ToString());
                 xw.WriteStartElement("Region");
-                xw.WriteAttributeString("Red", s.region.Index.R.ToString());
-                xw.WriteAttributeString("Green", s.region.Index.G.ToString());
-                xw.WriteAttributeString("Blue", s.region.Index.B.ToString());
+                xw.WriteAttributeString("Red", starSystem.Region.Index.R.ToString());
+                xw.WriteAttributeString("Green", starSystem.Region.Index.G.ToString());
+                xw.WriteAttributeString("Blue", starSystem.Region.Index.B.ToString());
                 xw.WriteEndElement();
                 xw.WriteStartElement("Planets");
-                i = 0;
-                foreach (Planet p in s.Planets)
+
+                for (int i = 0; i < starSystem.Planets.Count; i++)
                 {
+                    Planet planet = starSystem.Planets[i];
                     xw.WriteStartElement("Planet");
                     xw.WriteAttributeString("Orbit", i.ToString());
-                    i++;
-                    xw.WriteAttributeString("Size", p.size);
-                    xw.WriteAttributeString("Type", p.type);
-                    xw.WriteElementString("Anomalies", p.anomaly);
+                    xw.WriteAttributeString("Size", planet.Size);
+                    xw.WriteAttributeString("Type", planet.Type);
+                    xw.WriteElementString("Anomalies", planet.Anomaly);
                     xw.WriteStartElement("Moons");
-                    j = 0;
-                    for (; j<p.moonsTemples.Count; j++)
+
+                    for (int j = 0; j < planet.MoonsTemples.Count; j++)
                     {
                         xw.WriteStartElement("Moon");
-                        xw.WriteAttributeString("Temple", p.moonsTemples[j]);
+                        xw.WriteAttributeString("Temple", planet.MoonsTemples[j]);
                         xw.WriteEndElement();
                     }
+
                     xw.WriteEndElement();
                     xw.WriteStartElement("Resources");
-                    if (p.resource != null)
+                    if (planet.Resource != null)
                     {
-                        xw.WriteAttributeString(p.resource.type.ToString(), p.resource.name);
-                        xw.WriteAttributeString("Size", p.resource.size.ToString());
+                        xw.WriteAttributeString(planet.Resource.Type.ToString(), planet.Resource.Name);
+                        xw.WriteAttributeString("Size", planet.Resource.Size.ToString());
                     }
+
                     xw.WriteEndElement();
                     xw.WriteEndElement();
                 }
+
                 xw.WriteEndElement();
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("Warps");
             foreach (WarpLine w in this.Warps)
             {
-                if (! w.isWormhole)
+                if (!w.IsWormhole)
                 {
                     xw.WriteStartElement("Warp");
-                    xw.WriteAttributeString("System1", w.starA.id.ToString());
-                    xw.WriteAttributeString("System2", w.starB.id.ToString());
+                    xw.WriteAttributeString("System1", w.StarA.Id.ToString());
+                    xw.WriteAttributeString("System2", w.StarB.Id.ToString());
                     xw.WriteEndElement();
                 }
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("Wormholes");
             foreach (WarpLine w in this.Warps)
             {
-                if (w.isWormhole)
+                if (w.IsWormhole)
                 {
                     xw.WriteStartElement("Wormhole");
-                    xw.WriteAttributeString("System1", w.starA.id.ToString());
-                    xw.WriteAttributeString("System2", w.starB.id.ToString());
+                    xw.WriteAttributeString("System1", w.StarA.Id.ToString());
+                    xw.WriteAttributeString("System2", w.StarB.Id.ToString());
                     xw.WriteEndElement();
                 }
             }
+
             xw.WriteEndElement();
 
-            outputStatistics (xw);
+            this.OutputStatistics(xw);
         }
 
-        public List<StarSystem> Stars { get; protected set; }
-        public List<WarpLine> Warps { get; protected set; }
-        public List<Constellation> Constellations { get; protected set; }
-        public List<Region> Regions { get; protected set; }
-        public List<StarSystem> SpawnStars { get; protected set; }
-        public List<Planet> Planets
-        {
-            get
-            {
-                List<Planet> list = new List<Planet>();
-                foreach (StarSystem s in this.Stars) list.AddRange(s.Planets);
-                return list;
-            }
-        }
-        
-        public bool IsValid { get; protected set; }
-
-        private List<Builder> builderList;
-
+        /// <summary>
+        /// Computes the diameter of a galaxy
+        /// </summary>
+        /// <returns>Diameter of the galaxy </returns>
         public double Diameter()
         {
             double d = 0;
             foreach (StarSystem s in this.Stars)
             {
-                if (s.directDistanceTable.Count <= 0) s.computeDirectDistanceTable();
-
-                foreach (StarSystem y in s.directDistanceTable.Keys)
+                if (s.DirectDistanceTable.Count <= 0)
                 {
-                    if (s.directDistanceTable[y] > d) d = s.directDistanceTable[y];
+                    s.ComputeDirectDistanceTable();
+                }
+
+                foreach (StarSystem y in s.DirectDistanceTable.Keys)
+                {
+                    if (s.DirectDistanceTable[y] > d)
+                    {
+                        d = s.DirectDistanceTable[y];
+                    }
                 }
             }
 
             return d;
         }
 
-        protected Galaxy(Configuration configuration)
+        /// <summary>
+        /// Writes the current galaxy stats in the output xml
+        /// </summary>
+        /// <param name="xw"> Xml Writer </param>
+        private void OutputStatistics(XmlWriter xw)
         {
-            Galaxy.Instance = this;
-            this.IsValid = true;
-
-            this.builderList = new List<Builder>();
-
-            StarBuilder starBuilder = new StarBuilder();
-            ConstellationBuilder constellationsBuilder = new ConstellationBuilder();
-            WarpBuilder warpBuilder = new WarpBuilder(); 
-            SpawnBuilder spawnBuilder = new SpawnBuilder();
-            PlanetBuilder planetBuilder = new PlanetBuilder();
-            HomeBuilder homeBuilder = new HomeBuilder();
-            StrategicResourceBuilder strategicResourceBuilder = new StrategicResourceBuilder();
-            LuxuryResourceBuilder luxuryResourceBuilder = new LuxuryResourceBuilder();
-
-            this.builderList.Add(starBuilder);
-            this.builderList.Add(constellationsBuilder);
-            this.builderList.Add(warpBuilder);
-            this.builderList.Add(spawnBuilder);
-            this.builderList.Add(planetBuilder);
-            this.builderList.Add(homeBuilder);
-            this.builderList.Add(strategicResourceBuilder);
-            this.builderList.Add(luxuryResourceBuilder);
-
-            this.Configuration = configuration;
-
-            this.Stars = new List<StarSystem>();
-            this.Warps = new List<WarpLine>();
-            this.Constellations = new List<Constellation>();
-            this.Regions = new List<Region>();
-            this.SpawnStars = new List<StarSystem>();
-            //this.Planets = new List<Planet>();
-
-            foreach (Builder builder in this.builderList)
-            {
-                if (this.IsValid)
-                {
-                    builder.Execute();
-                    this.IsValid = this.IsValid && builder.Result;
-                }
-            }
-
-            if (!this.IsValid)
-            {
-                System.Diagnostics.Trace.WriteLine("--Galaxy generation failed--");
-                System.Diagnostics.Trace.WriteLine("--Generation defects summary--");
-                foreach (Builder b in this.builderList)
-                {
-                    foreach (string text in b.Defects)
-                    {
-                        System.Diagnostics.Trace.WriteLine(b.Name + " -> " + text);
-                    }
-                }
-                System.Diagnostics.Trace.WriteLine("--Generation defects end--");
-            }
-        }
-
-        ~Galaxy() { Instance = null; this.Configuration.ResetNames(); this.Planets.Clear(); }
-/*
-        private void distributeLuxuryResources()
-        {
-            int nSites, qty, i, r;
-            List<Planet> sites = new List<Planet>();
-            HashSet<Planet> usedSites = new HashSet<Planet>();
-            HashSet<string> usedLuxes = new HashSet<string>();
-            Planet selP;
-  //          StarSystem sourceCenter;
-            int tier;
-
-            System.Diagnostics.Trace.WriteLine("distributeLuxuryResources-begin");
-
-            qty = this.Configuration.luxuryResourceNumberOfTypes();
-
-            System.Diagnostics.Trace.WriteLine("total luxes = " + Settings.Instance.luxuryResourceNames.Count.ToString());
-            System.Diagnostics.Trace.WriteLine("number of lux types " + qty.ToString());
-            tier = 1;
-            do
-            {
-                //System.Diagnostics.Trace.WriteLine("tier " + tier.ToString() + " usedLuxes.Count=" +usedLuxes.Count.ToString());
-                usedLuxes.Add(this.Configuration.getRandomLuxuryResource(tier));
-                tier++;
-                if (tier > 4)
-                    tier = 1;
-            }
-            while ((usedLuxes.Count < qty) && (usedLuxes.Count < Settings.Instance.luxuryResourceNames.Count));
-
-            //System.Diagnostics.Trace.WriteLine("compiled usedLuxes");
-
-            foreach (string resName in usedLuxes)
-            {
-                //sourceCenter = this.stars[];
-                qty = 7;
-                //nSites = qMax (hConstel.count(), int (0.3 * double (qty)));
-                nSites = 4;
-                //qty = qMax (qty, nSites);
-                sites.Clear();
-                usedSites.Clear();
-                foreach (StarSystem sys in this.Stars)
-                {
-                    foreach (Planet p in sys.Planets)
-                    {
-                        if (p.resource == null)
-                        {
-                            i = 0;
-                            for (; i<Settings.Instance.planetLuxuriesPerPlanetType[p.type][resName]; i++)
-                                sites.Add(p);
-                        }
-                    }
-                }
-                i = 0;
-                if (sites.Count == 0)
-                    qty = 0;
-                for (; i<qty; i++)
-                {
-                    selP = null;
-                    if (usedSites.Count < nSites)
-                    {
-                        r = GalaxyGeneratorPlugin.random.Next(sites.Count);
-                        selP = sites[r];
-                        usedSites.Add(selP);
-                    }
-                    else
-                    {
-                        do
-                        {
-                            r = GalaxyGeneratorPlugin.random.Next(sites.Count);
-                            selP = sites[r];
-                        }
-                        while (! usedSites.Contains(selP));
-                    }
-                    if (selP != null)
-                    {
-                        if (selP.resource == null)
-                            selP.resource = new ResourceDeposit_Luxury (resName);
-                        else if (selP.resource.size < ResourceDeposit.MaxSize)
-                            selP.resource.increaseSize();
-                    }
-                }
-            }
-
-            System.Diagnostics.Trace.WriteLine("distributeLuxuryResources-end");
-        }
-*/
-        private void outputStatistics(XmlWriter xw)
-        {
-            Dictionary<string, int> starTypeCount = new Dictionary<string,int>();
-            Dictionary<int, int> planetNumberCount = new Dictionary<int,int>();
-            Dictionary<string, int> planetTypeCount = new Dictionary<string,int>();
-            Dictionary<string, int> planetSizeTypeCount = new Dictionary<string,int>();
-            Dictionary<string, int> anomalyCount = new Dictionary<string,int>();
-            Dictionary<string, int> templeCount = new Dictionary<string,int>();
+            Dictionary<string, int> starTypeCount = new Dictionary<string, int>();
+            Dictionary<int, int> planetNumberCount = new Dictionary<int, int>();
+            Dictionary<string, int> planetTypeCount = new Dictionary<string, int>();
+            Dictionary<string, int> planetSizeTypeCount = new Dictionary<string, int>();
+            Dictionary<string, int> anomalyCount = new Dictionary<string, int>();
+            Dictionary<string, int> templeCount = new Dictionary<string, int>();
             List<string> orderedKeys = new List<string>();
-            Dictionary<string, HashSet<ResourceDeposit> > sr = new Dictionary<string,HashSet<ResourceDeposit>>();
-            StringBuilder sb = new StringBuilder();
-            int total;
+            Dictionary<string, HashSet<ResourceDeposit>> sr = new Dictionary<string, HashSet<ResourceDeposit>>();
 
             xw.WriteStartElement("Statistics");
 
             xw.WriteStartElement("StarTypes");
             foreach (StarSystem s in this.Stars)
             {
-                if (starTypeCount.Keys.Contains(s.type))
-                    starTypeCount[s.type]++;
+                if (starTypeCount.Keys.Contains(s.Type))
+                {
+                    starTypeCount[s.Type]++;
+                }
                 else
-                    starTypeCount.Add(s.type, 1);
+                {
+                    starTypeCount.Add(s.Type, 1);
+                }
             }
+
             foreach (string txt in starTypeCount.Keys)
             {
                 xw.WriteStartElement(txt);
                 xw.WriteAttributeString("Quantity", starTypeCount[txt].ToString());
-                xw.WriteEndElement ();
+                xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("PlanetPerSystem");
-            total = 0;
+            int total = 0;
             foreach (StarSystem s in this.Stars)
             {
                 total += s.Planets.Count;
                 if (planetNumberCount.Keys.Contains(s.Planets.Count))
+                {
                     planetNumberCount[s.Planets.Count]++;
+                }
                 else
+                {
                     planetNumberCount.Add(s.Planets.Count, 1);
+                }
             }
+
             foreach (int i in planetNumberCount.Keys)
             {
                 xw.WriteStartElement("Planets");
@@ -414,46 +480,68 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
                 xw.WriteAttributeString("NumSystems", planetNumberCount[i].ToString());
                 xw.WriteEndElement();
 
-                System.Diagnostics.Trace.WriteLine(planetNumberCount[i].ToString() + " systems with " + i.ToString() + " planets");
+                Trace.WriteLine(planetNumberCount[i].ToString() + " systems with " + i.ToString() + " planets");
             }
+
             xw.WriteEndElement();
-            System.Diagnostics.Trace.WriteLine("Average " + ((double)(total) / (double)(this.Stars.Count)).ToString() + " planets per system");
+            Trace.WriteLine("Average " + (total / (double)this.Stars.Count).ToString() + " planets per system");
 
             xw.WriteStartElement("PlanetTypes");
             foreach (StarSystem s in this.Stars)
+            {
                 foreach (Planet p in s.Planets)
                 {
-                    if (planetTypeCount.Keys.Contains(p.type))
-                        planetTypeCount[p.type]++;
+                    if (planetTypeCount.Keys.Contains(p.Type))
+                    {
+                        planetTypeCount[p.Type]++;
+                    }
                     else
-                        planetTypeCount.Add(p.type, 1);
+                    {
+                        planetTypeCount.Add(p.Type, 1);
+                    }
                 }
+            }
+
             foreach (string txt in planetTypeCount.Keys)
             {
                 xw.WriteStartElement(txt);
                 xw.WriteAttributeString("Quantity", planetTypeCount[txt].ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("Anomalies");
             foreach (StarSystem s in this.Stars)
+            {
                 foreach (Planet p in s.Planets)
                 {
-                    if (anomalyCount.Keys.Contains(p.anomaly))
-                        anomalyCount[p.anomaly]++;
+                    if (anomalyCount.Keys.Contains(p.Anomaly))
+                    {
+                        anomalyCount[p.Anomaly]++;
+                    }
                     else
-                        anomalyCount.Add(p.anomaly, 1);
+                    {
+                        anomalyCount.Add(p.Anomaly, 1);
+                    }
                 }
+            }
+
             foreach (string txt in anomalyCount.Keys)
             {
-                if (txt == "")
+                if (txt == string.Empty)
+                {
                     xw.WriteStartElement("NoAnomaly");
+                }
                 else
+                {
                     xw.WriteStartElement(txt);
+                }
+
                 xw.WriteAttributeString("Quantity", anomalyCount[txt].ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("PlanetTypesAndSizes");
@@ -461,14 +549,19 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
             {
                 foreach (Planet p in s.Planets)
                 {
-                    string txt = p.size + "-" + p.type;
+                    string txt = p.Size + "-" + p.Type;
                     if (planetSizeTypeCount.Keys.Contains(txt))
+                    {
                         planetSizeTypeCount[txt]++;
+                    }
                     else
+                    {
                         planetSizeTypeCount.Add(txt, 1);
+                    }
                 }
             }
-            orderedKeys = new List<string> (planetSizeTypeCount.Keys);
+
+            orderedKeys = new List<string>(planetSizeTypeCount.Keys);
             orderedKeys.Sort();
             foreach (string txt in orderedKeys)
             {
@@ -476,51 +569,72 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
                 xw.WriteAttributeString("Quantity", planetSizeTypeCount[txt].ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("Resources");
             sr.Clear();
             foreach (StarSystem s in this.Stars)
+            {
                 foreach (Planet p in s.Planets)
-                    if (p.resource != null)
+                {
+                    if (p.Resource != null)
                     {
-                        if (!sr.Keys.Contains(p.resource.name))
-                            sr.Add(p.resource.name, new HashSet<ResourceDeposit>());
-                        sr[p.resource.name].Add(p.resource);
+                        if (!sr.Keys.Contains(p.Resource.Name))
+                        {
+                            sr.Add(p.Resource.Name, new HashSet<ResourceDeposit>());
+                        }
+
+                        sr[p.Resource.Name].Add(p.Resource);
                     }
+                }
+            }
+
             foreach (string txt in sr.Keys)
             {
                 foreach (ResourceDeposit rd in sr[txt])
                 {
                     xw.WriteStartElement(txt);
-                    xw.WriteAttributeString("Size", rd.size.ToString());
+                    xw.WriteAttributeString("Size", rd.Size.ToString());
+                    xw.WriteAttributeString("System", rd.Location.System.Id.ToString());
                     xw.WriteEndElement();
                 }
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("Temples");
             templeCount.Clear();
             foreach (StarSystem s in this.Stars)
+            {
                 foreach (Planet p in s.Planets)
-                    foreach (string txt in p.moonsTemples)
+                {
+                    foreach (string txt in p.MoonsTemples)
                     {
                         if (templeCount.Keys.Contains(txt))
+                        {
                             templeCount[txt]++;
+                        }
                         else
+                        {
                             templeCount.Add(txt, 1);
+                        }
                     }
+                }
+            }
+
             foreach (string txt in templeCount.Keys)
             {
                 xw.WriteStartElement(txt);
                 xw.WriteAttributeString("Quantity", templeCount[txt].ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             int minWarps, maxWarps, maxWH, nwh;
             double avgWarps, totalWarps, nsys;
-            Dictionary<int, int> warpCounts = new Dictionary<int,int>();
+            Dictionary<int, int> warpCounts = new Dictionary<int, int>();
 
             minWarps = 999;
             maxWarps = 0;
@@ -530,26 +644,50 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
             foreach (StarSystem s in this.Stars)
             {
                 nsys++;
-                totalWarps += s.destinations.Count;
-                if (warpCounts.ContainsKey(s.destinations.Count))
-                    warpCounts[s.destinations.Count]++;
+                totalWarps += s.Destinations.Count;
+                if (warpCounts.ContainsKey(s.Destinations.Count))
+                {
+                    warpCounts[s.Destinations.Count]++;
+                }
                 else
-                    warpCounts.Add(s.destinations.Count, 1);
-                if (s.destinations.Count < minWarps)
-                    minWarps = s.destinations.Count;
-                if (s.destinations.Count > maxWarps)
-                    maxWarps = s.destinations.Count;
+                {
+                    warpCounts.Add(s.Destinations.Count, 1);
+                }
+
+                if (s.Destinations.Count < minWarps)
+                {
+                    minWarps = s.Destinations.Count;
+                }
+
+                if (s.Destinations.Count > maxWarps)
+                {
+                    maxWarps = s.Destinations.Count;
+                }
+
                 nwh = 0;
                 foreach (WarpLine w in this.Warps)
-                    if (w.isWormhole && ((w.starA == s) || (w.starB == s)))
+                {
+                    if (w.IsWormhole && ((w.StarA == s) || (w.StarB == s)))
+                    {
                         nwh++;
+                    }
+                }
+
                 if (nwh > maxWH)
+                {
                     maxWH = nwh;
+                }
             }
+
             if (nsys > 0)
+            {
                 avgWarps = totalWarps / nsys;
+            }
             else
+            {
                 avgWarps = 0;
+            }
+
             avgWarps = (double)((int)(100 * avgWarps)) / 100;
 
             xw.WriteStartElement("Connectivity");
@@ -567,10 +705,11 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
                 xw.WriteAttributeString("NofStars", warpCounts[n].ToString());
                 xw.WriteEndElement();
             }
+
             xw.WriteEndElement();
 
             xw.WriteStartElement("GenerationDefects");
-            foreach (Builder builder in this.builderList)
+            foreach (Builder builder in this.BuilderList)
             {
                 foreach (string defect in builder.Defects)
                 {
@@ -580,10 +719,10 @@ namespace Amplitude.GalaxyGenerator.Generation.Components
                     xw.WriteEndElement();
                 }
             }
+
             xw.WriteEndElement();
 
             xw.WriteEndElement();
         }
     }
-
 }

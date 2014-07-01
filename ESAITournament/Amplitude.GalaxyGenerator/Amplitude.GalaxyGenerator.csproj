@@ -3,6 +3,8 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{85B58B65-3851-4B68-AC79-C8D1F4C9E80F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -10,6 +12,7 @@
     <AssemblyName>Amplitude.GalaxyGenerator</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -24,15 +27,20 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Drawing\Color.cs" />
+    <Compile Include="Drawing\ImageInfos.cs" />
+    <Compile Include="Drawing\Point.cs" />
+    <Compile Include="Drawing\PointF.cs" />
+    <Compile Include="Drawing\TargaImage.cs" />
     <Compile Include="GalaxyGeneratorPlugin.cs" />
     <Compile Include="Generation\Builders\Builder.cs" />
     <Compile Include="Generation\Builders\HomeBuilder.cs" />
@@ -48,8 +56,12 @@
     <Compile Include="Generation\Components\ResourceDeposit.cs" />
     <Compile Include="Generation\Components\StarSystem.cs" />
     <Compile Include="Generation\Components\WarpLine.cs" />
+    <Compile Include="Generation\Components\Wormhole.cs" />
     <Compile Include="Generation\Configuration.cs" />
     <Compile Include="Generation\Builders\ConstellationBuilder.cs" />
+    <Compile Include="Generation\Constraints.cs" />
+    <Compile Include="Generation\GalaxyAge.cs" />
+    <Compile Include="Generation\GalaxySize.cs" />
     <Compile Include="Generation\Geometry2D.cs" />
     <Compile Include="Generation\HomeGenerator.cs" />
     <Compile Include="Generation\HomeTrait.cs" />
@@ -58,6 +70,12 @@
     <Compile Include="Generation\ShapeManager.cs" />
     <Compile Include="Generation\Builders\WarpBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Triangulator\Delauney.cs" />
+    <Compile Include="Triangulator\Geometry\Edge.cs" />
+    <Compile Include="Triangulator\Geometry\Point.cs" />
+    <Compile Include="Triangulator\Geometry\PointN.cs" />
+    <Compile Include="Triangulator\Geometry\Triangle.cs" />
+    <Compile Include="Utilities\Random.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

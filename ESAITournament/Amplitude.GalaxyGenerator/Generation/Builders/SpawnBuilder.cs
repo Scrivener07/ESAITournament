@@ -1,208 +1,289 @@
-﻿using System;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="SpawnBuilder.cs" company="AMPLITUDE Studios">
+//   Copyright AMPLITUDE Studios. All rights reserved.
+//   
+//   This Source Code Form is subject to the terms of the Mozilla Public
+//   License, v. 2.0. If a copy of the MPL was not distributed with this
+//   file, You can obtain one at http://mozilla.org/MPL/2.0/ .
+// </copyright>
+// <summary>
+//   Defines the SpawnBuilder type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Drawing;
+using Amplitude.GalaxyGenerator.Drawing;
+using Amplitude.GalaxyGenerator.Generation.Components;
+using Region = Amplitude.GalaxyGenerator.Generation.Components.Region;
 
 namespace Amplitude.GalaxyGenerator.Generation.Builders
 {
-    using Components;
-
+    /// <summary>
+    /// Spawn builder.
+    /// </summary>
     public class SpawnBuilder : Builder
     {
-        override public string Name { get { return "SpawnBuilder"; } }
-
-        public SpawnBuilder() : base()
+        /// <summary>
+        /// Gets the builder's name.
+        /// </summary>
+        public override string Name
         {
+            get { return "SpawnBuilder"; }
         }
 
-        override public void Execute()
+        /// <summary>
+        /// Counts interesting connections for a given StarSystem.
+        /// </summary>
+        /// <param name="starSystem"> The starSystem system. </param>
+        /// <returns> Number of interesting connection for this StarSystem </returns>
+        public static int CountInterestingConnections(StarSystem starSystem)
         {
-            List<Region> spawnRegions = new List<Region>(Galaxy.Instance.Regions.FindAll((r) => { return r.isSpawn(); }));
-            int nEmpires = Galaxy.Instance.Configuration.empiresNumber();
+            int n = 0;
+
+            foreach (WarpLine w in starSystem.Warps())
+            {
+                if (w.IsWormhole)
+                {
+                    n += 1;
+                }
+                else if (w.StarA.Region != w.StarB.Region)
+                {
+                    n += 2;
+                }
+                else if (w.StarA.Region == w.StarB.Region)
+                {
+                    n += 5;
+                }
+            }
+
+            return n;
+            /*
+            return starSystem.warps().Count((w) =>
+            {
+                return (!w.isWormhole)
+                    && (    (w.StarA.region == w.StarB.region)
+                            || (!w.StarA.region.isSpawn())
+                            || (!w.StarB.region.isSpawn()) 
+                       );
+            }
+            );
+             */
+        }
+
+        /// <summary>
+        /// Find next spawner.
+        /// </summary>
+        /// <param name="region"> The region. </param>
+        /// <returns> A Region </returns>
+        public static Region FindNextSpawner(Region region)
+        {
+            Color c;
+            List<Color> sequence = new List<Color>(Galaxy.Instance.Configuration.Shape.SpawnerSequence);
+
+            if (sequence.Count <= 0)
+            {
+                return null;
+            }
+
+            Color next = sequence.First();
+            if (null != region)
+            {
+                c = region.Index;
+                if (sequence.Contains(c))
+                {
+                    next = sequence.ElementAt((1 + sequence.IndexOf(c)) % sequence.Count);
+                }
+            }
+
+            return Galaxy.Instance.Regions.Find(r => (r.Index == next));
+        }
+
+        /// <summary>
+        /// Executes current's builder
+        /// </summary>
+        public override void Execute()
+        {
+            List<Region> spawnRegions = new List<Region>(Galaxy.Instance.Regions.FindAll(r => r.IsSpawn()));
+            int empiresNumber = Galaxy.Instance.Configuration.EmpiresNumber();
             List<StarSystem> interdicted = new List<StarSystem>();
             List<StarSystem> candidates = new List<StarSystem>();
             StarSystem best;
-            int maxConnections;
 
-            System.Diagnostics.Trace.WriteLine(this.Name + " - Execute - begin");
-            System.Diagnostics.Trace.WriteLine("Spawn generation with " + nEmpires.ToString() + " empires");
+            Trace.WriteLine(this.Name + " - Execute - begin");
+            Trace.WriteLine("Spawn generation with " + empiresNumber + " empires");
 
-            spawnRegions.RemoveAll((r) => { return r.Count <= 0; });
+            spawnRegions.RemoveAll(r => r.Count <= 0);
 
-            Region spawner = SpawnBuilder.FindNextSpawner(null);
+            Region spawner = FindNextSpawner(null);
 
-            while ((spawnRegions.Count > 0) && (nEmpires > 0))
+            while ((spawnRegions.Count > 0) && (empiresNumber > 0))
             {
                 candidates.Clear();
                 candidates.AddRange(spawner);
-                candidates.RemoveAll((s) => { return Galaxy.Instance.SpawnStars.Contains(s); });
-                if (interdicted.Count((s) => { return spawner.Contains(s); }) <= candidates.Count)
+                candidates.RemoveAll(s => Galaxy.Instance.SpawnStars.Contains(s));
+                if (interdicted.Count(s => spawner.Contains(s)) <= candidates.Count)
                 {
-                    candidates.RemoveAll((s) => { return interdicted.Contains(s); });
-                }
-                if (spawner.Count((s) => { return s.destinations.Count <= 1; }) < candidates.Count)
-                {
-                    candidates.RemoveAll((s) => { return s.destinations.Count <= 1; });
+                    candidates.RemoveAll(interdicted.Contains);
                 }
 
-                maxConnections = 0;
+                if (spawner.Count(s => s.Destinations.Count <= 1) < candidates.Count)
+                {
+                    candidates.RemoveAll(s => s.Destinations.Count <= 1);
+                }
+
+                int maxConnections = 0;
                 foreach (StarSystem s in candidates)
                 {
-                    int connections = SpawnBuilder.CountInterestingConnections(s);
+                    int connections = CountInterestingConnections(s);
                     if (connections > maxConnections)
                     {
                         maxConnections = connections;
                     }
                 }
 
-                candidates.RemoveAll((s) => { return maxConnections > SpawnBuilder.CountInterestingConnections(s); });
+                candidates.RemoveAll(s => (maxConnections > CountInterestingConnections(s)));
 
                 best = this.FindFarthest(candidates, Galaxy.Instance.SpawnStars);
 
                 if (best != null)
                 {
                     Galaxy.Instance.SpawnStars.Add(best);
-                    nEmpires--;
+                    empiresNumber--;
 
-                    //interdict all proximate stars for subsequent spawns
-                    interdicted.AddRange(Galaxy.Instance.Stars.FindAll((s) => { return Geometry2D.Distance(best.position, s.position) < Settings.Instance.generationConstraints.minEmpireDistance; }));
+                    // prohibit all proximate stars for subsequent spawns
+                    interdicted.AddRange(Galaxy.Instance.Stars.FindAll(s => (Geometry2D.Distance(best.Position, s.Position) < Settings.Instance.GenerationConstraints.MinEmpireDistance)));
                 }
 
                 spawnRegions.Remove(spawner);
-                spawner = SpawnBuilder.FindNextSpawner(spawner);
+                spawner = FindNextSpawner(spawner);
             }
 
             List<StarSystem> downgradedCandidates = new List<StarSystem>();
 
-            if (nEmpires > 0)
+            if (empiresNumber > 0)
             {
                 spawnRegions.Clear();
-                //take all spawners
-                spawnRegions.AddRange(Galaxy.Instance.Regions.FindAll((r) => { return r.isSpawn(); }));
-                //remove all already taken spawn regions
-                spawnRegions.RemoveAll((r) =>
-                    {
-                        return 0 < Galaxy.Instance.SpawnStars.Count((s) => { return s.region.Index == r.Index; });
-                    });
-                //restart spawn region sequence
-                spawner = SpawnBuilder.FindNextSpawner(null);
-                while (!spawnRegions.Contains(spawner)) spawner = SpawnBuilder.FindNextSpawner(spawner);
+
+                // take all spawners
+                spawnRegions.AddRange(Galaxy.Instance.Regions.FindAll(r => r.IsSpawn()));
+
+                // remove all already taken spawn regions
+                spawnRegions.RemoveAll(r => 0 < Galaxy.Instance.SpawnStars.Count(s => s.Region.Index == r.Index));
+
+                // restart spawn region sequence
+                spawner = FindNextSpawner(null);
+
+                while (!spawnRegions.Contains(spawner))
+                {
+                    spawner = FindNextSpawner(spawner);
+                }
 
                 this.Defects.Add("Using downgraded spawn algorithm");
             }
-            while (nEmpires > 0)
+
+            while (empiresNumber > 0)
             {
-                System.Diagnostics.Trace.WriteLine("Downgraded Spawn Algorithms - Downgraded spawns remaining : " + nEmpires.ToString());
+                Trace.WriteLine("Downgraded Spawn Algorithms - Downgraded spawns remaining : " + empiresNumber);
 
                 downgradedCandidates.Clear();
                 downgradedCandidates.AddRange(spawner);
-                downgradedCandidates.RemoveAll((s) => { return Galaxy.Instance.SpawnStars.Contains(s); });
+                downgradedCandidates.RemoveAll(s => Galaxy.Instance.SpawnStars.Contains(s));
+
                 if (downgradedCandidates.Count == 0)
                 {
                     downgradedCandidates.AddRange(Galaxy.Instance.Stars);
                 }
-                downgradedCandidates.RemoveAll((s) => { return Galaxy.Instance.SpawnStars.Contains(s); });
+
+                downgradedCandidates.RemoveAll(s => Galaxy.Instance.SpawnStars.Contains(s));
                 best = this.FindFarthest(downgradedCandidates, Galaxy.Instance.SpawnStars);
-                if (null == best)
+
+                if (best == null)
                 {
-                    System.Diagnostics.Trace.WriteLine("FAILED TO SPAWN");
+                    Trace.WriteLine("FAILED TO SPAWN");
                     this.Result = false;
                     return;
                 }
+
                 Galaxy.Instance.SpawnStars.Add(best);
-                nEmpires--;
-                while (!spawnRegions.Contains(spawner)) spawner = SpawnBuilder.FindNextSpawner(spawner);
+                empiresNumber--;
+                while (!spawnRegions.Contains(spawner))
+                {
+                    spawner = FindNextSpawner(spawner);
+                }
             }
 
-            System.Diagnostics.Trace.WriteLine("Spawn Builder placed " + Galaxy.Instance.SpawnStars.Count.ToString() + " empires");
+            Trace.WriteLine("Spawn Builder placed " + Galaxy.Instance.SpawnStars.Count + " empires");
 
-            if (Galaxy.Instance.SpawnStars.Count < Galaxy.Instance.Configuration.empiresNumber())
+            if (Galaxy.Instance.SpawnStars.Count < Galaxy.Instance.Configuration.EmpiresNumber())
             {
                 this.TraceDefect("Failed to spawn - Not enough empires were spawned", true);
                 return;
             }
 
-            //Shuffle spawn stars
+            // Shuffle spawn stars
             List<StarSystem> sourceSpawn = new List<StarSystem>(Galaxy.Instance.SpawnStars);
             StarSystem star;
             Galaxy.Instance.SpawnStars.Clear();
             while (sourceSpawn.Count > 0)
             {
-                star = sourceSpawn.ElementAt(GalaxyGeneratorPlugin.random.Next(sourceSpawn.Count));
+                star = sourceSpawn.ElementAt(GalaxyGeneratorPlugin.Random.Next(sourceSpawn.Count));
                 Galaxy.Instance.SpawnStars.Add(star);
                 sourceSpawn.Remove(star);
             }
 
             this.Result = true;
 
-            System.Diagnostics.Trace.WriteLine(this.Name + " - Execute - end");
+            Trace.WriteLine(this.Name + " - Execute - end");
         }
 
-        public static Region FindNextSpawner(Region reg)
-        {
-            Color c;
-            List<Color> seq = new List<Color>(Galaxy.Instance.Configuration.shape().spawnerSequence);
-            Color next;
-
-            if (seq.Count <= 0)
-                return null;
-
-            next = seq.First();
-            if (null != reg)
-            {
-                c = reg.Index;
-                if (seq.Contains(c))
-                    next = seq.ElementAt((1 + seq.IndexOf(c)) % seq.Count);
-            }
-
-            return Galaxy.Instance.Regions.Find((r) => { return r.Index == next;});
-        }
-
+        /// <summary>
+        /// Find the farthest starsystem
+        /// </summary>
+        /// <param name="candidates"> The candidates. </param>
+        /// <param name="repellents"> The repellents. </param>
+        /// <returns> Farthest StarSystem </returns>
         protected StarSystem FindFarthest(List<StarSystem> candidates, List<StarSystem> repellents)
         {
-            if (null == candidates) return null;
-            if (candidates.Count <= 0) return null;
+            if (candidates == null)
+            {
+                return null;
+            }
+
+            if (candidates.Count <= 0)
+            {
+                return null;
+            }
 
             List<StarSystem> localRepellents = new List<StarSystem>();
-            if (null != repellents) localRepellents.AddRange(repellents);
+            if (repellents != null)
+            {
+                localRepellents.AddRange(repellents);
+            }
 
             if ((localRepellents.Count <= 0) && (candidates.Count > 0))
             {
-                return candidates.ElementAt(GalaxyGeneratorPlugin.random.Next(candidates.Count));
+                return candidates.ElementAt(GalaxyGeneratorPlugin.Random.Next(candidates.Count));
             }
 
-            double d, dMax;
             StarSystem farthest = null;
 
-            dMax = 0;
+            double distanceMax = 0;
             foreach (StarSystem c in candidates)
             {
                 foreach (StarSystem r in localRepellents)
                 {
-                    d = Geometry2D.Distance(c.position, r.position);
-                    if (d > dMax)
+                    double distance = Geometry2D.Distance(c.Position, r.Position);
+                    if (distance > distanceMax)
                     {
-                        dMax = d;
+                        distanceMax = distance;
                         farthest = c;
                     }
                 }
             }
 
             return farthest;
-        }
-
-        static public int CountInterestingConnections(StarSystem star)
-        {
-            return star.warps().Count((w) =>
-            {
-                return (!w.isWormhole)
-                    && (    (w.starA.region == w.starB.region)
-                            || (!w.starA.region.isSpawn())
-                            || (!w.starB.region.isSpawn()) 
-                       );
-            }
-            );
         }
     }
 }

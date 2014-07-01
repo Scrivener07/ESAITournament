@@ -44,9 +44,22 @@ namespace ESAITournamentInstaller
 			return Environment.CurrentDirectory + "/../../Payload";
 		}
 
+		static string GalaxyGeneratorPath() {
+			return Environment.CurrentDirectory + "/../../../Amplitude.GalaxyGenerator/bin/Debug/Amplitude.GalaxyGenerator.dll";
+		}
+
 		public static void Main (string[] args)
 		{
 			Console.WriteLine ("Welcome to ESAITournamentInstaller.");
+
+			Console.Write ("Building payload...");
+			string galaxyDestPath = PayloadPath () + "/Plugins/GalaxyGenerator";
+			if (!Directory.Exists(galaxyDestPath)) {
+				Directory.CreateDirectory (galaxyDestPath);
+			}
+			File.Copy (GalaxyGeneratorPath (), galaxyDestPath + "/GalaxyGeneratorPlugin.dll", true);
+			Console.WriteLine ("Done.");
+
 			Console.Write ("Creating default mod...");
 			string mp = modPath ();
 			DirectoryInfo d = new DirectoryInfo (mp);

@@ -1,39 +1,62 @@
-﻿// <copyright file="WarpLine.cs" company="AMPLITUDE Studios">Copyright AMPLITUDE Studios. All rights reserved.</copyright>
+﻿// <copyright file="WarpLine.cs" company="AMPLITUDE Studios">
+//   Copyright AMPLITUDE Studios. All rights reserved.
+//   
+//   This Source Code Form is subject to the terms of the Mozilla Public
+//   License, v. 2.0. If a copy of the MPL was not distributed with this
+//   file, You can obtain one at http://mozilla.org/MPL/2.0/ .
+// </copyright>
+// <summary>
+//   
+// </summary>
 
 namespace Amplitude.GalaxyGenerator.Generation.Components
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-
+    /// <summary>
+    /// Warp line definition.
+    /// </summary>
     public class WarpLine
     {
-        public int id { get; set; }
-        public bool isWormhole { get; protected set; }
-
-        public StarSystem starA { get; protected set; }
-        public StarSystem starB { get; protected set; }
-
-        public double Length { get { return Geometry2D.Distance(this.starA.position, this.starB.position); } }
-
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WarpLine"/> class.
+        /// </summary>
+        /// <param name="a"> StarSystem origin of the WarpLine </param>
+        /// <param name="b"> StarSystem end of the WarpLine </param>
         public WarpLine(StarSystem a, StarSystem b)
         {
-            this.id = Galaxy.Instance.Warps.Count;
-            this.starA = a;
-            this.starB = b;
-            this.starA.destinations.Add(this.starB);
-            this.starB.destinations.Add(this.starA);
-            this.isWormhole = false;
+            this.Id = Galaxy.Instance.Warps.Count;
+            this.StarA = a;
+            this.StarB = b;
+            this.StarA.Destinations.Add(this.StarB);
+            this.StarB.Destinations.Add(this.StarA);
+            this.IsWormhole = false;
         }
-    }
 
-    public class Wormhole : WarpLine
-    {
-        public Wormhole(StarSystem a, StarSystem b)
-            : base (a, b)
+        /// <summary>
+        /// Gets or sets the id.
+        /// </summary>
+        public int Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether it's a wormhole.
+        /// </summary>
+        public bool IsWormhole { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the star a.
+        /// </summary>
+        public StarSystem StarA { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the star b.
+        /// </summary>
+        public StarSystem StarB { get; protected set; }
+
+        /// <summary>
+        /// Gets the length.
+        /// </summary>
+        public double Length
         {
-            this.isWormhole = true;
+            get { return Geometry2D.Distance(this.StarA.Position, this.StarB.Position); }
         }
     }
 }

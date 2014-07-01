@@ -2,3 +2,5 @@ ESAITournament/Amplitude.GalaxyGenerator/bin/
 ESAITournament/Amplitude.GalaxyGenerator/obj/
 ESAITournament/ESAITournamentInstaller/bin/
 *.userprefs
+ESAITournament/ESAITournamentInstaller/obj/
+ESAITournament/ESAITournamentInstaller/Payload/Plugins/GalaxyGenerator/GalaxyGeneratorPlugin.dll

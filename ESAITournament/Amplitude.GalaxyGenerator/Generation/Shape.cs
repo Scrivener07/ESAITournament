@@ -1,123 +1,260 @@
-﻿// <copyright file="Shape.cs" company="AMPLITUDE Studios">Copyright AMPLITUDE Studios. All rights reserved.</copyright>
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="Shape.cs" company="AMPLITUDE Studios">
+//   Copyright AMPLITUDE Studios. All rights reserved.
+//   
+//   This Source Code Form is subject to the terms of the Mozilla Public
+//   License, v. 2.0. If a copy of the MPL was not distributed with this
+//   file, You can obtain one at http://mozilla.org/MPL/2.0/ .
+// </copyright>
+// <summary>
+//   
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Xml;
+using Amplitude.GalaxyGenerator.Drawing;
 
 namespace Amplitude.GalaxyGenerator.Generation
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Drawing;
-    using System.Xml;
-
+    /// <summary>
+    /// Galaxy Shapes
+    /// </summary>
     public class Shape
     {
-        public Shape(System.Xml.XmlTextReader reader)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Shape"/> class.
+        /// </summary>
+        /// <param name="reader"> Xml reader </param>
+        public Shape(XmlTextReader reader)
         {
-            this.densityFileName = reader.GetAttribute("DensityMap");
-            System.Diagnostics.Trace.WriteLine(this.densityFileName);
-            this.densityMap = new System.Drawing.Bitmap(densityFileName);
+            this.DensityMap = null;
+            string directory = GalaxyGeneratorPlugin.RootPath; // System.Diagnostics.Process.GetCurrentProcess().StartInfo.WorkingDirectory;
+            this.DensityFileName = reader.GetAttribute("DensityMap");
 
-            this.regionsFileName = reader.GetAttribute("RegionMap");
-            System.Diagnostics.Trace.WriteLine(this.regionsFileName);
-            this.regionsMap = new System.Drawing.Bitmap(regionsFileName);
+            if (this.DensityFileName != null)
+            {
+                Trace.WriteLine(directory + this.DensityFileName);
+                if (File.Exists(directory + this.DensityFileName))
+                {
+                    this.DensityMap = new ImageInfos(ImageType.Targa, directory + this.DensityFileName);
+                }
+                else
+                {
+                    throw new FileNotFoundException(directory+ this.DensityFileName);
+                }
 
-            this.minConstellations = Int32.Parse(reader.GetAttribute("MinConstellations"));
-            this.maxConstellations = Int32.Parse(reader.GetAttribute("MaxConstellations"));
-            this.minEmpires = Int32.Parse(reader.GetAttribute("MinEmpires"));
-            this.maxEmpires = Int32.Parse(reader.GetAttribute("MaxEmpires"));
+                if (this.DensityMap == null)
+                {
+                    Trace.WriteLine(directory + this.DensityFileName + " was either not found or unusable");
+                }
+            }
 
-            this.regions = new Dictionary<Color, bool>();
-            this.spawnerSequence = new List<Color>();
-            //this.poolRegions = new List<Color>();
+            this.RegionsFileName = reader.GetAttribute("RegionMap");
+            Trace.WriteLine(directory + this.RegionsFileName);
+            if (File.Exists(directory + this.RegionsFileName))
+            {
+                this.RegionsMap = new ImageInfos(ImageType.Targa, directory + this.RegionsFileName);
+            }
+            else
+            {
+                throw new FileNotFoundException(directory+this.RegionsFileName);
+            }
 
-            this.symetryOptions = new HashSet<int>();
+            this.MinConstellations = int.Parse(reader.GetAttribute("MinConstellations"));
+            this.MaxConstellations = int.Parse(reader.GetAttribute("MaxConstellations"));
+            this.MinEmpires = int.Parse(reader.GetAttribute("MinEmpires"));
+            this.MaxEmpires = int.Parse(reader.GetAttribute("MaxEmpires"));
 
-            this.topology = new List<Link>();
+            this.Regions = new Dictionary<Color, bool>();
+            this.SpawnerSequence = new List<Color>();
+            this.SymetryOptions = new HashSet<int>();
+            this.Topology = new List<Link>();
+            this.RegionWeights = new Dictionary<Color, int>();
 
             do
             {
                 reader.Read();
                 if (reader.NodeType == XmlNodeType.Element)
                 {
-                    if (reader.Name == "SymetryOptions")
-                        this.readSymetryOptions(reader);
-                    else if (reader.Name == "Regions")
-                        this.readRegions(reader);
-                    else if (reader.Name == "Topology")
-                        this.readTopology(reader);
+                    switch (reader.Name)
+                    {
+                        case "SymetryOptions":
+                            this.ReadSymetryOptions(reader);
+                            break;
+                        case "Regions":
+                            this.ReadRegions(reader);
+                            break;
+                        case "Topology":
+                            this.ReadTopology(reader);
+                            break;
+                    }
                 }
             }
             while (!((reader.NodeType == XmlNodeType.EndElement) && (reader.Name == "GalaxyShape")));
 
-//            System.Diagnostics.Trace.WriteLine("finished reading shape description");
+            // System.Diagnostics.Trace.WriteLine("finished reading shape description");
         }
 
-        public class Link
-        {
-            public Color RegionA;
-            public Color RegionB;
+        /// <summary>
+        /// Gets or sets the density file name.
+        /// </summary>
+        public string DensityFileName { get; protected set; }
 
-            public Link(Color a, Color b)
-            {
-                this.RegionA = a;
-                this.RegionB = b;
-            }
-        }
+        /// <summary>
+        /// Gets or sets the regions file name.
+        /// </summary>
+        public string RegionsFileName { get; protected set; }
 
-        public string densityFileName { get; protected set; }
-        public string regionsFileName { get; protected set; }
-        public System.Drawing.Bitmap densityMap { get; protected set; }
-        public System.Drawing.Bitmap regionsMap { get; protected set; }
-        public int minConstellations { get; protected set; }
-        public int maxConstellations { get; protected set; }
-        public int minEmpires { get; protected set; }
-        public int maxEmpires { get; protected set; }
-        public HashSet<int> symetryOptions { get; protected set; }
-        public Dictionary<System.Drawing.Color, bool> regions { get; protected set; }
-        public List<Shape.Link> topology { get; protected set; }
-        //public List<Color> poolRegions { get; protected set; }
-        public List<Color> spawnerSequence { get; protected set; }
+        /// <summary>
+        /// Gets or sets the density map.
+        /// </summary>
+        public ImageInfos DensityMap { get; protected set; }
 
-        protected void readSymetryOptions(XmlTextReader xr)
+        /// <summary>
+        /// Gets or sets the regions map.
+        /// </summary>
+        public ImageInfos RegionsMap { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the minimum constellations.
+        /// </summary>
+        public int MinConstellations { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the max constellations.
+        /// </summary>
+        public int MaxConstellations { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the min empires.
+        /// </summary>
+        public int MinEmpires { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the max empires.
+        /// </summary>
+        public int MaxEmpires { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the symetry options.
+        /// </summary>
+        public HashSet<int> SymetryOptions { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the regions.
+        /// </summary>
+        public Dictionary<Color, bool> Regions { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the topology.
+        /// </summary>
+        public List<Link> Topology { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the spawner sequence.
+        /// </summary>
+        public List<Color> SpawnerSequence { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the region weights.
+        /// </summary>
+        public Dictionary<Color, int> RegionWeights { get; protected set; }
+
+        /// <summary>
+        /// Reads symetry options
+        /// </summary>
+        /// <param name="xr"> xml reader </param>
+        protected void ReadSymetryOptions(XmlTextReader xr)
         {
             do
             {
                 xr.Read();
                 if ((xr.NodeType == XmlNodeType.Element) && (xr.Name == "SymetryOption"))
                 {
-                    this.symetryOptions.Add(Int32.Parse(xr.GetAttribute("PlayerNum")));
+                    this.SymetryOptions.Add(int.Parse(xr.GetAttribute("PlayerNum")));
                 }
             }
             while (!((xr.NodeType == XmlNodeType.EndElement) && (xr.Name == "SymetryOptions")));
         }
 
-        protected void readRegions(XmlTextReader xr)
+        /// <summary>
+        /// Read regions.
+        /// </summary>
+        /// <param name="xr"> Xml Reader </param>
+        protected void ReadRegions(XmlTextReader xr)
         {
-            System.Drawing.Color rgb;
+            Color rgb;
             string col;
             byte r, g, b;
             bool spawner;
+            bool hasColor;
+            int weight;
 
             do
             {
                 xr.Read();
-                if ((xr.NodeType == XmlNodeType.Element) && (xr.Name == "Region"))
+                if ((xr.NodeType == XmlNodeType.Element) && (xr.Name == "Region") && xr.HasAttributes)
                 {
-                    col = xr.GetAttribute("color");
+                    hasColor = false;
+                    rgb = Color.White;
+                    spawner = false;
+                    weight = 1;
 
-                    r = Byte.Parse(col.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
-                    g = Byte.Parse(col.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
-                    b = Byte.Parse(col.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
-                    rgb = Color.FromArgb(r, g, b);
-                    spawner = (xr.GetAttribute("empirestart") == "1");
-                    this.regions.Add(rgb, spawner);
-                    if (spawner) this.spawnerSequence.Add(rgb);
+                    xr.MoveToFirstAttribute();
+                    do
+                    {
+                        switch (xr.Name)
+                        {
+                            case "color":
+                                col = xr.GetAttribute("color");
+                                r = byte.Parse(col.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+                                g = byte.Parse(col.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+                                b = byte.Parse(col.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+                                rgb = Color.FromArgb(r, g, b);
+                                hasColor = true;
+                                break;
+                            case "empirestart":
+                                spawner = xr.GetAttribute("empirestart") == "1";
+                                break;
+                            case "weight":
+                                weight = int.Parse(xr.GetAttribute("weight"));
+                                break;
+                        }
+                    }
+                    while (xr.MoveToNextAttribute());
+
+                    if (!hasColor)
+                    {
+                        Trace.WriteLine("Found an undefined color for a region in Shapes file !?");
+                        do
+                        {
+                            rgb = Color.FromArgb(GalaxyGeneratorPlugin.Random.Next(256), GalaxyGeneratorPlugin.Random.Next(256), GalaxyGeneratorPlugin.Random.Next(256));
+                        }
+                        while (this.Regions.ContainsKey(rgb));
+                    }
+
+                    this.Regions.Add(rgb, spawner);
+                    if (spawner)
+                    {
+                        this.SpawnerSequence.Add(rgb);
+                    }
+
+                    this.RegionWeights.Add(rgb, weight);
                 }
             }
             while (!((xr.NodeType == XmlNodeType.EndElement) && (xr.Name == "Regions")));
         }
 
-        protected void readTopology(XmlTextReader xr)
+        /// <summary>
+        /// Reads the Topology.
+        /// </summary>
+        /// <param name="xr"> Xml Reader </param>
+        protected void ReadTopology(XmlTextReader xr)
         {
-            System.Drawing.Color regionA, regionB;
+            Color regionA, regionB;
             string txt;
             byte r, g, b;
 
@@ -127,19 +264,20 @@ namespace Amplitude.GalaxyGenerator.Generation
                 if ((xr.NodeType == XmlNodeType.Element) && (xr.Name == "Link"))
                 {
                     txt = xr.GetAttribute("RegionA");
-                    r = Byte.Parse(txt.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
-                    g = Byte.Parse(txt.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
-                    b = Byte.Parse(txt.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+                    r = byte.Parse(txt.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+                    g = byte.Parse(txt.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+                    b = byte.Parse(txt.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
                     regionA = Color.FromArgb(r, g, b);
 
                     txt = xr.GetAttribute("RegionB");
-                    r = Byte.Parse(txt.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
-                    g = Byte.Parse(txt.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
-                    b = Byte.Parse(txt.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
+                    r = byte.Parse(txt.Substring(1, 2), System.Globalization.NumberStyles.HexNumber);
+                    g = byte.Parse(txt.Substring(3, 2), System.Globalization.NumberStyles.HexNumber);
+                    b = byte.Parse(txt.Substring(5, 2), System.Globalization.NumberStyles.HexNumber);
                     regionB = Color.FromArgb(r, g, b);
 
-                    this.topology.Add(new Link(regionA, regionB));
+                    this.Topology.Add(new Link(regionA, regionB));
                 }
+
                 /*else if ((xr.NodeType == XmlNodeType.Element) && (xr.Name == "Pool"))
                 {
                     txt = xr.GetAttribute("Region");
@@ -150,6 +288,33 @@ namespace Amplitude.GalaxyGenerator.Generation
                 }*/
             }
             while (!((xr.NodeType == XmlNodeType.EndElement) && (xr.Name == "Topology")));
+        }
+
+        /// <summary>
+        /// Link between regions
+        /// </summary>
+        public class Link
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="Link"/> class.
+            /// </summary>
+            /// <param name="a"> First region connected </param>
+            /// <param name="b"> Second region connected </param>
+            public Link(Color a, Color b)
+            {
+                this.RegionA = a;
+                this.RegionB = b;
+            }
+
+            /// <summary>
+            /// Gets or sets the region a.
+            /// </summary>
+            public Color RegionA { get; set; }
+
+            /// <summary>
+            /// Gets or sets the region b.
+            /// </summary>
+            public Color RegionB { get; set; }
         }
     }
 }
