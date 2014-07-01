@@ -7,6 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESAITournamentInstaller", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESInjector", "ESInjector\ESInjector.csproj", "{B03AE9F7-19F0-4B56-BA79-7A9F843827B0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ESStaticInjector", "ESStaticInjector\ESStaticInjector.csproj", "{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StaticInjectorTestor", "StaticInjectorTestor\StaticInjectorTestor.csproj", "{41314CB6-22B2-44F5-BF54-C4644E24EBD8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AITrampoline", "AITrampoline\AITrampoline.csproj", "{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +26,18 @@ Global
 		{17363E80-68C7-4C18-9CB4-82513BE204E1}.Default|Any CPU.Build.0 = Debug|Any CPU
 		{17363E80-68C7-4C18-9CB4-82513BE204E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17363E80-68C7-4C18-9CB4-82513BE204E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}.Default|Any CPU.ActiveCfg = Debug|Any CPU
+		{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}.Default|Any CPU.Build.0 = Debug|Any CPU
+		{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41314CB6-22B2-44F5-BF54-C4644E24EBD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41314CB6-22B2-44F5-BF54-C4644E24EBD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41314CB6-22B2-44F5-BF54-C4644E24EBD8}.Default|Any CPU.ActiveCfg = Debug|Any CPU
+		{41314CB6-22B2-44F5-BF54-C4644E24EBD8}.Default|Any CPU.Build.0 = Debug|Any CPU
+		{41314CB6-22B2-44F5-BF54-C4644E24EBD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41314CB6-22B2-44F5-BF54-C4644E24EBD8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{85B58B65-3851-4B68-AC79-C8D1F4C9E80F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{85B58B65-3851-4B68-AC79-C8D1F4C9E80F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{85B58B65-3851-4B68-AC79-C8D1F4C9E80F}.Default|Any CPU.ActiveCfg = Debug|Any CPU
@@ -32,8 +50,14 @@ Global
 		{B03AE9F7-19F0-4B56-BA79-7A9F843827B0}.Default|Any CPU.Build.0 = Debug|Any CPU
 		{B03AE9F7-19F0-4B56-BA79-7A9F843827B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B03AE9F7-19F0-4B56-BA79-7A9F843827B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}.Default|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}.Default|Any CPU.Build.0 = Debug|Any CPU
+		{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = ESAITournamentInstaller\ESAITournamentInstaller.csproj
+		StartupItem = ESStaticInjector\ESStaticInjector.csproj
 	EndGlobalSection
 EndGlobal

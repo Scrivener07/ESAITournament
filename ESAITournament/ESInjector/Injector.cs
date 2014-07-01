@@ -33,7 +33,8 @@ namespace ESInjector
 			// Swap the method.
 			Trace.WriteLine ("Method swap");
 			try {
-				MethodRental.SwapMethodBody(typeof(AI), typeof(AI).GetConstructors()[0].MetadataToken, addr, size, MethodRental.JitImmediate);
+				//typeof(AI).GetConstructors()[0].GetMethodBody().
+				//MethodRental.SwapMethodBody(typeof(AI), typeof(AI).GetConstructors()[0].MetadataToken, addr, size, MethodRental.JitImmediate);
 			}
 			catch (Exception ex) {
 				Trace.WriteLine ("Exception occurred");

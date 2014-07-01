@@ -5,4 +5,11 @@ ESAITournament/ESAITournamentInstaller/bin/
 ESAITournament/ESAITournamentInstaller/obj/
 ESAITournament/ESAITournamentInstaller/Payload/Plugins/GalaxyGenerator/GalaxyGeneratorPlugin.dll
 ESAITournament/ESInjector/bin/
+ESAITournament/ESInjector/obj
 ESAITournament/ESAITournamentInstaller/Payload/Plugins/GalaxyGenerator/ESInjector.dll
+ESAITournament/AITrampoline/bin/
+ESAITournament/AITrampoline/obj
+ESAITournament/StaticInjectorTestor/bin/
+ESAITournament/StaticInjectorTestor/obj
+ESAITournament/ESStaticInjector/bin/
+ESAITournament/ESStaticInjector/obj
