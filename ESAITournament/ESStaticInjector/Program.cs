@@ -75,6 +75,8 @@ namespace ESStaticInjector
 			}
 			myLibrary.Write (path+"Assembly-CSharp.dll");
 			System.IO.File.Copy (Environment.CurrentDirectory + @"/../../../AITrampoline/bin/Debug/AITrampoline.dll", path + "AITrampoline.dll", true);
+			System.IO.File.Copy (Environment.CurrentDirectory + @"/../../../DrunkenWalkAI/bin/Debug/DrunkenWalkAI.dll", path + "DrunkenWalkAI.dll", true);
+
 		}
 	}
 }

@@ -3,20 +3,20 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{33C59EE3-A2F6-4C6B-AE6A-2662878DF67C}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>ESStaticInjector</RootNamespace>
-    <AssemblyName>ESStaticInjector</AssemblyName>
+    <ProjectGuid>{BAD3E488-385D-48ED-BFE7-3DF9794CA27B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>DrunkenWalkAI</RootNamespace>
+    <AssemblyName>DrunkenWalkAI</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Externalconsole>true</Externalconsole>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -24,28 +24,27 @@
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Externalconsole>true</Externalconsole>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Mono.Cecil, Version=0.9.5.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756" />
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\..\..\Library\Application Support\Steam\SteamApps\common\Endless Space\Endless Space.app\Contents\Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>..\..\..\..\..\Library\Application Support\Steam\SteamApps\common\Endless Space\Endless Space.app\Contents\Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="DrunkenWalkAI.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <ProjectReference Include="..\AITrampoline\AITrampoline.csproj">
       <Project>{FE31ACDA-A43D-4019-86D5-5A3D4449D2BD}</Project>
       <Name>AITrampoline</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DrunkenWalkAI\DrunkenWalkAI.csproj">
-      <Project>{BAD3E488-385D-48ED-BFE7-3DF9794CA27B}</Project>
-      <Name>DrunkenWalkAI</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

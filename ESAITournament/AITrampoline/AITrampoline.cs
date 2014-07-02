@@ -2,10 +2,11 @@
 using System.Diagnostics;
 
 namespace AITrampoline
-{	public class ESAISampleAI {
+{
 
-	}
-	public class NotAIMaster : AI_Master {
+	public class NotAIMaster : AI_Master
+	{
+		public TournamentAI innerAI;
 
 		/**It's worth talking a bit about how this works.
 		 * 
@@ -21,64 +22,98 @@ namespace AITrampoline
 		 * these tasks have to stop regularly and return control to the caller, using Unity's "yield" keyword, and then are resumed. 
 		 * But that gets turned into an IEnumerator at compile.
 		 * */
-		private sealed class iterator : System.Collections.IEnumerator{
-			internal object current = null;
-			public bool MoveNext() {
+		private sealed class AICoroutine : System.Collections.IEnumerator
+		{
+			public object current = null;
+			NotAIMaster outer;
+
+			public AICoroutine (NotAIMaster _outer)
+			{
+				outer = _outer;
+			}
+
+			public bool MoveNext ()
+			{
 				Trace.WriteLine ("NotAIMaster moveNext");
-				return false;
+
+				try {
+					return outer.innerAI.Tick ();
+				}
+				catch(Exception ex) {
+					ESDebug.Report (ex);
+					return false;
+				}
 			}
-			public void Reset() {
-				throw new NotSupportedException();
+
+			public void Reset ()
+			{
+				throw new NotSupportedException ();
 			}
-			object System.Collections.IEnumerator.Current  {
+
+			object System.Collections.IEnumerator.Current {
 				get {
 					return current;
 				}
 			}
 
 		}
+
 		public override System.Collections.IEnumerator ProcessAsync ()
 		{
-			return new iterator ();
-		}
-		public NotAIMaster(Empire e) : base(e) {
-			this.layers = new System.Collections.Generic.List<AILayer> (); //clear any layers that are present
+			return new AICoroutine (this);
 		}
 
-	}
-
-	public class NotAIEmpire: AI_Empire {
-		public NotAIEmpire(Empire e) : base(e) {
-			this.layers = new System.Collections.Generic.List<AILayer> (); //clear any layers that are present
-		}
-		protected override System.Collections.IEnumerator BeginAIProcess ()
+		public NotAIMaster (Empire e) : base (e)
 		{
-			return base.BeginAIProcess ();
+			this.layers = new System.Collections.Generic.List<AILayer> (); //clear any layers that are present
 		}
 
 	}
+
+	public class NotAIEmpire: AI_Empire
+	{
+		public NotAIEmpire (Empire e) : base (e)
+		{
+			this.layers = new System.Collections.Generic.List<AILayer> (); //clear any layers that are present
+		}
+
+	}
+
 	public class AITrampoline : AIPlayerController
 	{
-		public AITrampoline(Player player): base(player)
+		TournamentAI innerAI;
+
+		public AITrampoline (Player player) : base (player)
 		{
 			TextWriterTraceListener listener = new TextWriterTraceListener (Environment.CurrentDirectory + "/AITrampoline.log");
 			Trace.Listeners.Add (listener);
 			Trace.AutoFlush = true;
 			Trace.WriteLine ("AITrampoline started up");
 		}
+
 		/**This seems to get called on both AI and Pirate players.*/
 		public override void Bind (Empire empire)
 		{
 			Trace.WriteLine ("Bind injection on empire " + empire.Player.EmpireIndex);
 			base.Bind (empire);
+			try {
+				if (empire.EmpirePlayerType != Empire.PlayerType.Pirates) {
+					innerAI = (TournamentAI)Activator.CreateInstance (Type.GetType ("DrunkenWalkAI.DrunkenWalkAI, DrunkenWalkAI", true));
+					innerAI.myEmpire = empire;
+					NotAIMaster master = new NotAIMaster (empire);
+					base.ai = master;
+					empire.AI = master;
+					master.innerAI = this.innerAI;
+					empire.EmpireAI = this.CreateAIEmpire (empire);
 
-			if (empire.EmpirePlayerType != Empire.PlayerType.Pirates) {
-				base.ai = new NotAIMaster (empire);
-				empire.AI = base.ai;
-				empire.EmpireAI = this.CreateAIEmpire (empire);
+				}
+			} catch (Exception ex) {
+				ESDebug.Report (ex);
 			}
 
+
 		}
+
 		public override AI_Empire CreateAIEmpire (Empire empire)
 		{
 			NotAIEmpire ai = new NotAIEmpire (empire);
@@ -89,8 +124,8 @@ namespace AITrampoline
 		protected override void Mailbox_InboxCollectionChange (object sender, System.ComponentModel.CollectionChangeEventArgs e)
 		{
 			Trace.WriteLine ("Mailbox_InboxCollectionChange action " + e.Action);
-			foreach(Mail m in this.Mailbox.Inbox) {
-				ESDebug.debug(m);
+			foreach (Mail m in this.Mailbox.Inbox) {
+				ESDebug.debug (m);
 				m.Read = true;
 			}
 		}
