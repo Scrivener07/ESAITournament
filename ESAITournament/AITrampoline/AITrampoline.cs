@@ -98,6 +98,7 @@ namespace AITrampoline
 			base.Bind (empire);
 			try {
 				if (empire.EmpirePlayerType != Empire.PlayerType.Pirates) {
+					//todo: decide dynamically which TournamentAI to use.  Maybe configure from a text file?
 					innerAI = (TournamentAI)Activator.CreateInstance (Type.GetType ("DrunkenWalkAI.DrunkenWalkAI, DrunkenWalkAI", true));
 					innerAI.myEmpire = empire;
 					NotAIMaster master = new NotAIMaster (empire);
@@ -123,6 +124,7 @@ namespace AITrampoline
 
 		protected override void Mailbox_InboxCollectionChange (object sender, System.ComponentModel.CollectionChangeEventArgs e)
 		{
+			//todo: pipe this information to the TournamentAI
 			Trace.WriteLine ("Mailbox_InboxCollectionChange action " + e.Action);
 			foreach (Mail m in this.Mailbox.Inbox) {
 				ESDebug.debug (m);
