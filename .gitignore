@@ -14,3 +14,12 @@ ESAITournament/StaticInjectorTestor/obj
 ESAITournament/ESStaticInjector/bin/
 ESAITournament/ESStaticInjector/obj
 ESAITournament/DrunkenWalkAI/bin/
+*.user
+*.suo
+ESAITournament/DrunkenWalkAI/obj/Release/DesignTimeResolveAssemblyReferencesInput.cache
+ESAITournament/DrunkenWalkAI/obj/Release/build.force
+ESAITournament/DrunkenWalkAI/obj/Debug/DrunkenWalkAI.pdb
+ESAITournament/DrunkenWalkAI/obj/Debug/DrunkenWalkAI.dll
+ESAITournament/DrunkenWalkAI/obj/Debug/DrunkenWalkAI.csprojResolveAssemblyReference.cache
+ESAITournament/DrunkenWalkAI/obj/Debug/DrunkenWalkAI.csproj.FileListAbsolute.txt
+ESAITournament/DrunkenWalkAI/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
